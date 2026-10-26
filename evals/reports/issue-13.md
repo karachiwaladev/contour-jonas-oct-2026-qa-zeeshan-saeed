@@ -2,9 +2,9 @@
 
 **Verdict: ✅ PASS**
 
-- **Previous state:** `origin/ticket-12-eval` (2f538b3)
-- **New state:** `working tree` (f18dd6a)
-- **Run at:** 2026-10-26T14:06:30.277Z
+- **Previous state:** `origin/ticket-12-eval` (e18dab0)
+- **New state:** `working tree` (f96a93c)
+- **Run at:** 2026-10-26T14:10:14.075Z
 
 ## What changed
 
@@ -74,12 +74,15 @@
 
 ## Unit tests
 
-Before: 28/28 passing · After: 32/32 passing
+Before: 31/31 passing · After: 35/35 passing
 
 <details><summary>All unit tests</summary>
 
 | Test | Before | After |
 |---|---|---|
+| evals: browser: an explicit Chrome path that does not exist is not used | ✅ | ✅ |
+| evals: browser: ignores a missing or partly written DevToolsActivePort | ✅ | ✅ |
+| evals: browser: reads the port Chrome picked from DevToolsActivePort | ✅ | ✅ |
 | evals: hook: a failing eval blocks with the failures | ✅ | ✅ |
 | evals: hook: a passing eval adds context and does not block | ✅ | ✅ |
 | evals: hook: ignores other commands and the eval runner itself | ✅ | ✅ |
