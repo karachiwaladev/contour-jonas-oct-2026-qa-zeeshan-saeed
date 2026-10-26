@@ -31,7 +31,7 @@ Never copy project details up into this file; summarise in one line and link dow
 
 | Folder | Purpose | Entry point |
 |--------|---------|-------------|
-| _none yet_ | Add a row when a ticket creates a project folder. | |
+| [todo/](todo/) | Todo app (Tickets #3, #4): tasks with due dates and tags, status/tag filters; IndexedDB. | [todo/README.md](todo/README.md) |
 
 ### Factory tooling
 

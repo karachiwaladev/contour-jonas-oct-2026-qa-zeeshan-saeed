@@ -1,0 +1,28 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; padding: 2rem 1rem; }
+main { max-width: 36rem; margin: 0 auto; }
+h1 { margin-top: 0; }
+input, select, button { font: inherit; }
+form { display: grid; gap: .5rem; margin-bottom: 1rem; }
+form input { padding: .5rem; }
+.row { display: flex; flex-wrap: wrap; gap: .5rem; }
+.row #tags { flex: 1; min-width: 10rem; }
+button { padding: .5rem .9rem; cursor: pointer; }
+.filters { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+#status-filter { display: flex; gap: .25rem; }
+#status-filter button[aria-pressed="true"] { font-weight: 600; outline: 2px solid currentColor; }
+.filters select { padding: .3rem; margin-left: .25rem; }
+ul { list-style: none; padding: 0; margin: 0; }
+li { display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+     padding: .5rem 0; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
+.body { flex: 1; min-width: 0; }
+label { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
+li.done .title { text-decoration: line-through; opacity: .6; }
+.meta { display: flex; flex-wrap: wrap; gap: .3rem; margin: .25rem 0 0 1.6rem; font-size: .85em; }
+.meta:empty { display: none; }
+.due { opacity: .75; }
+.due.overdue { color: #c62828; opacity: 1; }
+li.done .due.overdue { color: inherit; opacity: .6; }
+.tag { padding: .1rem .5rem; border-radius: 999px; border: 1px solid currentColor; background: transparent; font-size: inherit; }
+.delete { padding: .25rem .6rem; }
+#empty { opacity: .6; }

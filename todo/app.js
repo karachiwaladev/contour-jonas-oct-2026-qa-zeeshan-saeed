@@ -1,0 +1,114 @@
+const form = document.getElementById('new-task');
+const titleInput = document.getElementById('title');
+const dueInput = document.getElementById('due');
+const tagsInput = document.getElementById('tags');
+const list = document.getElementById('tasks');
+const empty = document.getElementById('empty');
+const statusButtons = document.querySelectorAll('#status-filter button');
+const tagFilter = document.getElementById('tag-filter');
+
+const filters = { status: 'all', tag: '' };
+
+function parseTags(text) {
+  return [...new Set(text.split(',').map(t => t.trim().toLowerCase()).filter(Boolean))];
+}
+
+function matches(task) {
+  if (filters.status === 'active' && task.done) return false;
+  if (filters.status === 'done' && !task.done) return false;
+  if (filters.tag && !(task.tags ?? []).includes(filters.tag)) return false;
+  return true;
+}
+
+function renderTagOptions(tasks) {
+  const tags = [...new Set(tasks.flatMap(t => t.tags ?? []))].sort();
+  if (filters.tag && !tags.includes(filters.tag)) filters.tag = '';
+  tagFilter.replaceChildren(
+    new Option('All tags', ''),
+    ...tags.map(tag => new Option(tag, tag, false, tag === filters.tag)),
+  );
+}
+
+async function render() {
+  const tasks = await TodoDB.all();
+  renderTagOptions(tasks);
+  const visible = tasks.filter(matches);
+  list.replaceChildren(...visible.map(taskItem));
+  empty.hidden = visible.length > 0;
+}
+
+function dueLabel(dueDate) {
+  const today = new Date().toISOString().slice(0, 10);
+  const span = document.createElement('span');
+  span.className = 'due' + (dueDate < today ? ' overdue' : '');
+  span.textContent = `Due ${dueDate}`;
+  return span;
+}
+
+function taskItem(task) {
+  const li = document.createElement('li');
+  li.className = task.done ? 'done' : '';
+
+  const label = document.createElement('label');
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = task.done;
+  checkbox.addEventListener('change', async () => {
+    await TodoDB.put({ ...task, done: checkbox.checked });
+    render();
+  });
+  const title = document.createElement('span');
+  title.className = 'title';
+  title.textContent = task.title;
+  label.append(checkbox, title);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  if (task.dueDate) meta.append(dueLabel(task.dueDate));
+  for (const tag of task.tags ?? []) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'tag';
+    chip.textContent = tag;
+    chip.title = `Show only "${tag}"`;
+    chip.addEventListener('click', () => { filters.tag = tag; render(); });
+    meta.append(chip);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.append(label, meta);
+
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'delete';
+  del.textContent = 'Delete';
+  del.setAttribute('aria-label', `Delete "${task.title}"`);
+  del.addEventListener('click', async () => {
+    await TodoDB.remove(task.id);
+    render();
+  });
+
+  li.append(body, del);
+  return li;
+}
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = titleInput.value.trim();
+  if (!title) return;
+  await TodoDB.add({ title, dueDate: dueInput.value, tags: parseTags(tagsInput.value) });
+  form.reset();
+  titleInput.focus();
+  render();
+});
+
+statusButtons.forEach(button => button.addEventListener('click', () => {
+  filters.status = button.dataset.status;
+  statusButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+  render();
+}));
+
+tagFilter.addEventListener('change', () => { filters.tag = tagFilter.value; render(); });
+
+render();
