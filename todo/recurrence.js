@@ -26,12 +26,19 @@ const Recurrence = (() => {
     }
   }
 
+  // Inverse of fromForm, to prefill the edit form.
+  function toForm(repeat) {
+    if (!repeat) return { choice: '', every: 2 };
+    if (repeat.every === 1) return { choice: { day: 'daily', week: 'weekly', month: 'monthly' }[repeat.unit], every: 2 };
+    return { choice: 'custom', every: repeat.unit === 'week' ? repeat.every * 7 : repeat.every };
+  }
+
   function label(repeat) {
     if (repeat.every === 1) return { day: 'daily', week: 'weekly', month: 'monthly' }[repeat.unit];
     return `every ${repeat.every} ${repeat.unit}s`;
   }
 
-  return { nextDueDate, fromForm, label };
+  return { nextDueDate, fromForm, toForm, label };
 })();
 
 if (typeof module !== 'undefined') module.exports = Recurrence;

@@ -1,0 +1,14 @@
+[
+  { "id": "1-add", "description": "Adding with priority High shows a High badge; default is Medium", "verifiedBy": "scenario:todo/priority-add" },
+  { "id": "2-sort", "description": "Sorted High → Medium → Low, then by due date", "verifiedBy": "scenario:todo/priority-sort" },
+  { "id": "2-sort-unit", "description": "Sort order rules (priority, due date, undated last)", "verifiedBy": "unit:priority: sorts high to low, then by due date with undated last" },
+  { "id": "3-filter", "description": "Priority filter shows only the chosen level and combines with status/tag filters", "verifiedBy": "scenario:todo/priority-filter" },
+  { "id": "4-edit-save", "description": "Edit title, due date, tags, priority → Save updates the task and persists after reload", "verifiedBy": "scenario:todo/edit-save" },
+  { "id": "5-edit-cancel", "description": "Edit → Cancel leaves the task unchanged", "verifiedBy": "scenario:todo/edit-cancel" },
+  { "id": "5-edit-validation", "description": "Edit blocks an empty title and a repeat without a due date", "verifiedBy": "scenario:todo/edit-validation" },
+  { "id": "6-recurring", "description": "A recurring High task's next occurrence is High", "verifiedBy": "scenario:todo/priority-recurring" },
+  { "id": "7-legacy", "description": "A task without a priority (older data) shows as Medium", "verifiedBy": "scenario:todo/priority-legacy-medium" },
+  { "id": "8-logs", "description": "Edits are logged as frontend:task.edit and backend:tasks.put", "verifiedBy": "scenario:todo/edit-logs" },
+  { "id": "9-ci", "description": "GitHub Eval check passes on the PR", "verifiedBy": "ci" },
+  { "id": "9-docs", "description": "README and CLAUDE.md index updated", "verifiedBy": "files:todo/README.md,CLAUDE.md" }
+]

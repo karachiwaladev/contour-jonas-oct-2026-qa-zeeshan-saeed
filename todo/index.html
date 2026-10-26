@@ -16,6 +16,11 @@
         <input id="tags" type="text" placeholder="Tags, comma-separated" autocomplete="off" aria-label="Tags">
       </div>
       <div class="row">
+        <select id="priority" aria-label="Priority">
+          <option value="high">High priority</option>
+          <option value="medium" selected>Medium priority</option>
+          <option value="low">Low priority</option>
+        </select>
         <select id="repeat" aria-label="Repeat">
           <option value="">Doesn't repeat</option>
           <option value="daily">Daily</option>
@@ -34,9 +39,19 @@
         <button type="button" data-status="active" aria-pressed="false">Incomplete</button>
         <button type="button" data-status="done" aria-pressed="false">Completed</button>
       </div>
-      <label>Tag
-        <select id="tag-filter"><option value="">All tags</option></select>
-      </label>
+      <div class="selects">
+        <label>Priority
+          <select id="priority-filter">
+            <option value="">All</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
+        <label>Tag
+          <select id="tag-filter"><option value="">All tags</option></select>
+        </label>
+      </div>
     </nav>
     <ul id="tasks"></ul>
     <p id="empty" hidden>No tasks to show.</p>
@@ -44,6 +59,7 @@
   <script src="db.js"></script>
   <script src="logger.js"></script>
   <script src="recurrence.js"></script>
+  <script src="priority.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
