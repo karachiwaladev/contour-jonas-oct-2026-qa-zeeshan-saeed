@@ -23,6 +23,12 @@ li.done .title { text-decoration: line-through; opacity: .6; }
 .due { opacity: .75; }
 .due.overdue { color: #c62828; opacity: 1; }
 li.done .due.overdue { color: inherit; opacity: .6; }
-.tag { padding: .1rem .5rem; border-radius: 999px; border: 1px solid currentColor; background: transparent; font-size: inherit; }
+.repeat { opacity: .75; }
+#repeat { padding: .5rem; }
+#every-wrap { display: flex; align-items: center; gap: .3rem; }
+#every-wrap[hidden] { display: none; }
+#every { width: 4rem; padding: .5rem; }
+#form-error { margin: 0; color: #c62828; }
+.tag {padding: .1rem .5rem; border-radius: 999px; border: 1px solid currentColor; background: transparent; font-size: inherit; }
 .delete { padding: .25rem .6rem; }
 #empty { opacity: .6; }

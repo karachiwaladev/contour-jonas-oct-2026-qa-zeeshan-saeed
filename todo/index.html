@@ -14,8 +14,19 @@
       <div class="row">
         <input id="due" type="date" aria-label="Due date">
         <input id="tags" type="text" placeholder="Tags, comma-separated" autocomplete="off" aria-label="Tags">
+      </div>
+      <div class="row">
+        <select id="repeat" aria-label="Repeat">
+          <option value="">Doesn't repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Every N days</option>
+        </select>
+        <label id="every-wrap" hidden>Every <input id="every" type="number" min="1" value="2" aria-label="Repeat every N days"> days</label>
         <button type="submit">Add</button>
       </div>
+      <p id="form-error" role="alert" hidden></p>
     </form>
     <nav class="filters" aria-label="Filters">
       <div id="status-filter" role="group" aria-label="Status">
@@ -31,6 +42,7 @@
     <p id="empty" hidden>No tasks to show.</p>
   </main>
   <script src="db.js"></script>
+  <script src="recurrence.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
