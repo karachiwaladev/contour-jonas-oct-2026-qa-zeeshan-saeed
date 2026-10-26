@@ -28,7 +28,8 @@ const TodoDB = (() => {
 
   return {
     all: () => run('readonly', s => s.getAll()),
-    add: title => run('readwrite', s => s.add({ title, done: false, createdAt: Date.now() })),
+    add: ({ title, dueDate = '', tags = [] }) =>
+      run('readwrite', s => s.add({ title, done: false, dueDate, tags, createdAt: Date.now() })),
     put: task => run('readwrite', s => s.put(task)),
     remove: id => run('readwrite', s => s.delete(id)),
   };
