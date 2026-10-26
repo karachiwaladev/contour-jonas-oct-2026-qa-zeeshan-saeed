@@ -21,6 +21,8 @@ Designed to be safe to run repeatedly (e.g. `/loop 10m /factory-loop`), so every
    "" | & $gh auth login --hostname github.com --git-protocol https --web --skip-ssh-key
    ```
    Read its output file for the one-time code, then tell the user to open https://github.com/login/device and enter it. Wait for the background task to complete, then re-check `auth status` and tell the user which account is logged in.
+   To switch accounts, `& $gh auth logout --hostname github.com --user <login>` first, and tell the user to sign out of GitHub in their browser (or sign in as the other account) before approving — otherwise the device flow silently logs the same account back in.
+4. Check the account's access up front: `& $gh api "repos/$repo" --jq .permissions` (with `$repo` from §2). Answering only needs `pull`, but closing needs `triage` or `push`. If both are false, tell the user before starting that issues will be answered but not closed, unless the account authored them.
 
 ## 2. Find the work
 
