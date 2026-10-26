@@ -32,13 +32,14 @@ Never copy project details up into this file; summarise in one line and link dow
 | Folder | Purpose | Entry point |
 |--------|---------|-------------|
 | [todo/](todo/) | Todo app (Tickets #3–#6): due dates, tags, filters, recurring tasks, priority, edit; IndexedDB; action logs. | [todo/README.md](todo/README.md) |
-| [evals/](evals/) | Change eval (#12): before/after comparison that blocks skipped tests and regressions. | [evals/README.md](evals/README.md) |
+| [evals/](evals/) | Change eval (#12): before/after comparison that blocks skipped tests and regressions; runs automatically after tests via a hook. | [evals/README.md](evals/README.md) |
 
 ### Factory tooling
 
 | Path | Purpose |
 |------|---------|
 | [.claude/skills/factory-loop/SKILL.md](.claude/skills/factory-loop/SKILL.md) | The loop: read open tickets, react, do/answer, close. Run with `/loop 10m /factory-loop`. |
+| [.claude/settings.json](.claude/settings.json) | Hook: runs the change eval right after any test command (`.claude/hooks/eval-after-tests.mjs`). |
 | [README.md](README.md) | Workshop rules and scoring. |
 
 ## Working a ticket

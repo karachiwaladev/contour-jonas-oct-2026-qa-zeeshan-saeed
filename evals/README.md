@@ -51,6 +51,20 @@ Exit code `0` = pass, `1` = fail. Needs Node 22+ and Chrome or Edge. No npm inst
 Add a project by listing it in `PROJECTS` (`lib/rules.mjs`), its test folder in `UNIT_SUITES` and its scenario
 in `SCENARIOS` (`run-eval.mjs`).
 
+## Hook: eval right after tests
+
+`.claude/settings.json` registers a Claude Code `PostToolUse` hook (`.claude/hooks/eval-after-tests.mjs`).
+After every shell command the AI runs, it checks whether that was a test run (`node --test`, `npm`/`pnpm`/`yarn test`).
+If it was, it runs this eval straight away (base `origin/main`, or `EVAL_BASE`; issue from the branch's
+`checks/issue-N.json`):
+
+- **pass:** the verdict is added to the AI's context.
+- **fail:** the hook returns `decision: "block"` with the failures, so the AI must fix them before carrying on.
+
+Each run is logged to `.claude/logs/eval-hook.jsonl`, and the last report is `.claude/logs/eval-latest.md` (both git-ignored).
+Set `EVAL_HOOK=off` to disable it. The runner sets this for its own child processes and never re-triggers itself.
+The decision logic is in `lib/hook.mjs`, tested by `tests/hook.test.mjs`.
+
 ## CI
 
 `.github/workflows/eval.yml` runs the same eval on every pull request (base = the PR's target branch, issue = the

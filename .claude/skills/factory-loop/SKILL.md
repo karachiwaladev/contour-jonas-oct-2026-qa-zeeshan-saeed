@@ -80,6 +80,8 @@ every gate below, in order, across as many runs as it takes; track progress by y
    `evals/scenarios/<project>.mjs` for the new behaviour, then run
    `node evals/run-eval.mjs --base origin/main --issue <issue>`. It compares the previous state with the new one and
    fails on code changed without tests, regressions, failing steps/tests, console errors, or checks with no result.
+   A `PostToolUse` hook also runs the eval automatically right after every test command and blocks with the
+   failures if it fails — treat a hook block like a failing test and fix it before moving on.
    Fix and re-run until it passes — **never open a PR with a failing eval**. The report
    (`evals/reports/issue-<issue>.md`) is committed with the change.
 7. **Commit** on a branch `ticket-<n>-<slug>` created from `origin/main` (message via `git commit -F`):
@@ -134,6 +136,7 @@ Per issue: what it asked, what you did (with links), and its state — closed, w
 
 - In PowerShell, don't pass `--jq` filters containing spaces; fetch `--json` and parse with `ConvertFrom-Json` — because the filter got split into several arguments.
 - Post comments with `--body-file`, and close only after the comment succeeds — because an inline multi-line `--body` failed while the close went through, leaving an issue closed without its answer.
+- Never round-trip JSON or other UTF-8 files through PowerShell `ConvertTo-Json`/`Set-Content`; write them with the Write/Edit tools or Node — because it turned "→" into mojibake in a checks file.
 - Write commit messages to a file and use `git commit -F <file>`, and check the commit landed before merging — because a message containing double quotes was split into pathspecs and the commit silently didn't happen.
 - Logging out and back in doesn't change repo access; when `push` is false, ask the user for a Write-access account or a grant instead of retrying — because repeated re-logins and pushes kept failing the same way.
 - The README says tickets are meant to be built by the loop, so do work tickets (§5) rather than handing them back — because the user confirmed it by asking for #3 to be built.

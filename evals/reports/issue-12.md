@@ -3,16 +3,16 @@
 **Verdict: ✅ PASS**
 
 - **Previous state:** `origin/main` (8794368)
-- **New state:** `working tree` (8794368)
-- **Run at:** 2026-10-26T11:30:08.425Z
+- **New state:** `working tree` (a58f846)
+- **Run at:** 2026-10-26T14:05:06.165Z
 
 ## What changed
 
 | Project | Code | Tests / scenario | Other |
 |---|---|---|---|
-| todo | M `todo/app.js`<br>M `todo/db.js`<br>M `todo/index.html`<br>A `todo/logger.js` | A `evals/scenarios/todo.mjs`<br>A `todo/tests/recurrence.test.mjs` | M `todo/README.md` |
-| evals | A `evals/lib/browser.mjs`<br>A `evals/lib/report.mjs`<br>A `evals/lib/rules.mjs`<br>A `evals/run-eval.mjs` | A `evals/tests/rules.test.mjs` | A `evals/README.md`<br>A `evals/checks/issue-12.json` |
-| _(repo)_ | | | M `.claude/skills/factory-loop/SKILL.md`<br>M `CLAUDE.md`<br>A `.github/workflows/eval.yml` |
+| todo | M `todo/app.js`<br>M `todo/db.js`<br>M `todo/index.html`<br>A `todo/logger.js` | A `evals/scenarios/todo.mjs`<br>A `todo/tests/recurrence.test.mjs` | M `todo/README.md`<br>A `todo/screenshots/issue-12/add-task.png`<br>A `todo/screenshots/issue-12/logs-frontend.png`<br>A `todo/screenshots/issue-12/recurring-weekly.png` |
+| evals | A `evals/lib/browser.mjs`<br>A `evals/lib/report.mjs`<br>A `evals/lib/rules.mjs`<br>A `evals/run-eval.mjs`<br>A `evals/lib/hook.mjs` | A `evals/tests/rules.test.mjs`<br>A `evals/tests/hook.test.mjs` | A `evals/README.md`<br>A `evals/checks/issue-12.json` |
+| _(repo)_ | | | M `.claude/skills/factory-loop/SKILL.md`<br>A `.github/workflows/eval.yml`<br>M `.gitignore`<br>M `CLAUDE.md`<br>A `.claude/hooks/eval-after-tests.mjs`<br>A `.claude/settings.json` |
 
 ## Acceptance checks
 
@@ -29,6 +29,14 @@
 | Eval fails when an acceptance check has no result | `unit:rules: fails when an acceptance check has no result` | ✅ pass | evals: rules: fails when an acceptance check has no result |
 | Report shows previous state, changes, per-check results and log comparison | `unit:report includes previous state, changes, checks and log comparison` | ✅ pass | evals: report includes previous state, changes, checks and log comparison |
 | Existing todo features still pass in the browser (no regressions) | `scenario:todo/recurring-weekly` | ✅ pass | [{"title":"Water plants","done":true,"due":"2026-10-26","overdue":false,"repeat":"","tags":["home"]},{"title":"Water plants","done":false,"due":"2026-11-02","ov |
+| Hook runs the eval after test commands | `unit:hook: triggers on test commands` | ✅ pass | evals: hook: triggers on test commands |
+| Hook ignores other commands and never re-triggers itself | `unit:hook: ignores other commands and the eval runner itself` | ✅ pass | evals: hook: ignores other commands and the eval runner itself |
+| Hook picks the issue from the branch checks file | `unit:hook: picks the issue from the branch checks file` | ✅ pass | evals: hook: picks the issue from the branch checks file |
+| A failing eval blocks and feeds the failures back to the AI | `unit:hook: a failing eval blocks with the failures` | ✅ pass | evals: hook: a failing eval blocks with the failures |
+| A passing eval adds context without blocking | `unit:hook: a passing eval adds context and does not block` | ✅ pass | evals: hook: a passing eval adds context and does not block |
+| Hook exits quietly for non-test commands and when disabled | `unit:hook: script exits quietly for non-test commands and when disabled` | ✅ pass | evals: hook: script exits quietly for non-test commands and when disabled |
+| Hook registered in .claude/settings.json | `files:.claude/settings.json,.claude/hooks/eval-after-tests.mjs` | ✅ pass | changed: .claude/settings.json,.claude/hooks/eval-after-tests.mjs |
+| End to end: a real test run in a Claude Code session triggers the eval; a broken change is blocked | `manual` | ✅ pass | 2026-10-26 live session: after `node --test todo/tests/recurrence.test.mjs` (7/7 passing) with delete deliberately broken, the PostToolUse hook ran the eval and |
 | GitHub Actions check runs on the PR and passes | `ci` | ⏳ deferred | verified by the GitHub Actions run on the PR |
 | CLAUDE.md index and factory-loop skill updated | `files:CLAUDE.md,.claude/skills/factory-loop/SKILL.md` | ✅ pass | changed: CLAUDE.md,.claude/skills/factory-loop/SKILL.md |
 
@@ -74,12 +82,19 @@
 
 ## Unit tests
 
-Before: 0/0 passing · After: 21/21 passing
+Before: 0/0 passing · After: 28/28 passing
 
 <details><summary>All unit tests</summary>
 
 | Test | Before | After |
 |---|---|---|
+| evals: hook: a failing eval blocks with the failures | — | ✅ |
+| evals: hook: a passing eval adds context and does not block | — | ✅ |
+| evals: hook: ignores other commands and the eval runner itself | — | ✅ |
+| evals: hook: picks the issue from the branch checks file | — | ✅ |
+| evals: hook: reads the eval verdict and failures | — | ✅ |
+| evals: hook: script exits quietly for non-test commands and when disabled | — | ✅ |
+| evals: hook: triggers on test commands | — | ✅ |
 | evals: report includes previous state, changes, checks and log comparison | — | ✅ |
 | evals: rules: a step that failed before and passes now is not a regression | — | ✅ |
 | evals: rules: classifies code, tests and other files per project | — | ✅ |

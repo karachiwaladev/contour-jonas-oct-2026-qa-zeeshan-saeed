@@ -41,7 +41,7 @@ try {
   const headRun = await runState(headRoot, { screenshots: args.screenshots });
 
   const checksFile = args.issue && path.join(headRoot, 'evals', 'checks', `issue-${args.issue}.json`);
-  const checks = checksFile && fs.existsSync(checksFile) ? JSON.parse(fs.readFileSync(checksFile, 'utf8')) : [];
+  const checks = checksFile && fs.existsSync(checksFile) ? JSON.parse(fs.readFileSync(checksFile, 'utf8').replace(/^﻿/, '')) : [];
   if (args.issue && !checks.length) console.warn(`No acceptance checks found for issue #${args.issue} (evals/checks/issue-${args.issue}.json)`);
 
   const flatten = run => ({ steps: run.browser.steps, unit: run.unit, consoleErrors: run.browser.consoleErrors });

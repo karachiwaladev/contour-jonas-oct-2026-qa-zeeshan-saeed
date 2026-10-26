@@ -10,6 +10,14 @@
   { "id": "4-missing-check", "description": "Eval fails when an acceptance check has no result", "verifiedBy": "unit:rules: fails when an acceptance check has no result" },
   { "id": "5-report", "description": "Report shows previous state, changes, per-check results and log comparison", "verifiedBy": "unit:report includes previous state, changes, checks and log comparison" },
   { "id": "6-existing-features", "description": "Existing todo features still pass in the browser (no regressions)", "verifiedBy": "scenario:todo/recurring-weekly" },
+  { "id": "9-hook-trigger", "description": "Hook runs the eval after test commands", "verifiedBy": "unit:hook: triggers on test commands" },
+  { "id": "9-hook-ignore", "description": "Hook ignores other commands and never re-triggers itself", "verifiedBy": "unit:hook: ignores other commands and the eval runner itself" },
+  { "id": "9-hook-issue", "description": "Hook picks the issue from the branch checks file", "verifiedBy": "unit:hook: picks the issue from the branch checks file" },
+  { "id": "9-hook-block", "description": "A failing eval blocks and feeds the failures back to the AI", "verifiedBy": "unit:hook: a failing eval blocks with the failures" },
+  { "id": "9-hook-pass", "description": "A passing eval adds context without blocking", "verifiedBy": "unit:hook: a passing eval adds context and does not block" },
+  { "id": "9-hook-quiet", "description": "Hook exits quietly for non-test commands and when disabled", "verifiedBy": "unit:hook: script exits quietly for non-test commands and when disabled" },
+  { "id": "9-hook-registered", "description": "Hook registered in .claude/settings.json", "verifiedBy": "files:.claude/settings.json,.claude/hooks/eval-after-tests.mjs" },
+  { "id": "9-hook-live", "description": "End to end: a real test run in a Claude Code session triggers the eval; a broken change is blocked", "verifiedBy": "manual", "evidence": "2026-10-26 live session: after `node --test todo/tests/recurrence.test.mjs` (7/7 passing) with delete deliberately broken, the PostToolUse hook ran the eval and blocked with: delete-task regression, missing backend:tasks.delete, console error. After the revert, the same test run produced 'Change eval for issue #12 passed right after this test run'. Both runs logged in .claude/logs/eval-hook.jsonl." },
   { "id": "7-ci", "description": "GitHub Actions check runs on the PR and passes", "verifiedBy": "ci" },
   { "id": "8-docs", "description": "CLAUDE.md index and factory-loop skill updated", "verifiedBy": "files:CLAUDE.md,.claude/skills/factory-loop/SKILL.md" }
 ]
