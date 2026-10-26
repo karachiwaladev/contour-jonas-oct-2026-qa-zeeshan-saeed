@@ -2,6 +2,10 @@ const form = document.getElementById('new-task');
 const titleInput = document.getElementById('title');
 const dueInput = document.getElementById('due');
 const tagsInput = document.getElementById('tags');
+const repeatSelect = document.getElementById('repeat');
+const everyWrap = document.getElementById('every-wrap');
+const everyInput = document.getElementById('every');
+const formError = document.getElementById('form-error');
 const list = document.getElementById('tasks');
 const empty = document.getElementById('empty');
 const statusButtons = document.querySelectorAll('#status-filter button');
@@ -54,7 +58,18 @@ function taskItem(task) {
   checkbox.type = 'checkbox';
   checkbox.checked = task.done;
   checkbox.addEventListener('change', async () => {
-    await TodoDB.put({ ...task, done: checkbox.checked });
+    if (checkbox.checked && task.repeat) {
+      // Keep the done occurrence as history; the series moves on to the next one.
+      await TodoDB.put({ ...task, done: true, repeat: null });
+      await TodoDB.add({
+        title: task.title,
+        tags: task.tags,
+        repeat: task.repeat,
+        dueDate: Recurrence.nextDueDate(task.dueDate, task.repeat),
+      });
+    } else {
+      await TodoDB.put({ ...task, done: checkbox.checked });
+    }
     render();
   });
   const title = document.createElement('span');
@@ -65,6 +80,12 @@ function taskItem(task) {
   const meta = document.createElement('div');
   meta.className = 'meta';
   if (task.dueDate) meta.append(dueLabel(task.dueDate));
+  if (task.repeat) {
+    const badge = document.createElement('span');
+    badge.className = 'repeat';
+    badge.textContent = `↻ ${Recurrence.label(task.repeat)}`;
+    meta.append(badge);
+  }
   for (const tag of task.tags ?? []) {
     const chip = document.createElement('button');
     chip.type = 'button';
@@ -97,10 +118,24 @@ form.addEventListener('submit', async e => {
   e.preventDefault();
   const title = titleInput.value.trim();
   if (!title) return;
-  await TodoDB.add({ title, dueDate: dueInput.value, tags: parseTags(tagsInput.value) });
+  const repeat = Recurrence.fromForm(repeatSelect.value, everyInput.value);
+  if (repeat && !dueInput.value) {
+    formError.textContent = 'Repeating tasks need a due date.';
+    formError.hidden = false;
+    dueInput.focus();
+    return;
+  }
+  await TodoDB.add({ title, dueDate: dueInput.value, tags: parseTags(tagsInput.value), repeat });
   form.reset();
+  everyWrap.hidden = true;
+  formError.hidden = true;
   titleInput.focus();
   render();
+});
+
+repeatSelect.addEventListener('change', () => {
+  everyWrap.hidden = repeatSelect.value !== 'custom';
+  if (!repeatSelect.value) formError.hidden = true;
 });
 
 statusButtons.forEach(button => button.addEventListener('click', () => {

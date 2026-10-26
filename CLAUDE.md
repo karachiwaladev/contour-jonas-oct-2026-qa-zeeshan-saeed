@@ -31,7 +31,7 @@ Never copy project details up into this file; summarise in one line and link dow
 
 | Folder | Purpose | Entry point |
 |--------|---------|-------------|
-| [todo/](todo/) | Todo app (Tickets #3, #4): tasks with due dates and tags, status/tag filters; IndexedDB. | [todo/README.md](todo/README.md) |
+| [todo/](todo/) | Todo app (Tickets #3–#5): due dates, tags, filters, recurring tasks; IndexedDB. | [todo/README.md](todo/README.md) |
 
 ### Factory tooling
 
