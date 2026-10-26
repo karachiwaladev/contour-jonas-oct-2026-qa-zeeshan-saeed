@@ -12,6 +12,7 @@ const statusButtons = document.querySelectorAll('#status-filter button');
 const tagFilter = document.getElementById('tag-filter');
 
 const filters = { status: 'all', tag: '' };
+const logUI = (action, details) => TodoLog.write('frontend', action, details);
 
 function parseTags(text) {
   return [...new Set(text.split(',').map(t => t.trim().toLowerCase()).filter(Boolean))];
@@ -58,15 +59,13 @@ function taskItem(task) {
   checkbox.type = 'checkbox';
   checkbox.checked = task.done;
   checkbox.addEventListener('change', async () => {
+    logUI(checkbox.checked ? 'task.complete' : 'task.uncomplete', { id: task.id, title: task.title });
     if (checkbox.checked && task.repeat) {
       // Keep the done occurrence as history; the series moves on to the next one.
       await TodoDB.put({ ...task, done: true, repeat: null });
-      await TodoDB.add({
-        title: task.title,
-        tags: task.tags,
-        repeat: task.repeat,
-        dueDate: Recurrence.nextDueDate(task.dueDate, task.repeat),
-      });
+      const nextDue = Recurrence.nextDueDate(task.dueDate, task.repeat);
+      const nextId = await TodoDB.add({ title: task.title, tags: task.tags, repeat: task.repeat, dueDate: nextDue });
+      logUI('task.recurrence.next', { from: task.id, id: nextId, dueDate: nextDue });
     } else {
       await TodoDB.put({ ...task, done: checkbox.checked });
     }
@@ -92,7 +91,7 @@ function taskItem(task) {
     chip.className = 'tag';
     chip.textContent = tag;
     chip.title = `Show only "${tag}"`;
-    chip.addEventListener('click', () => { filters.tag = tag; render(); });
+    chip.addEventListener('click', () => { filters.tag = tag; logUI('filter.tag', { tag, via: 'chip' }); render(); });
     meta.append(chip);
   }
 
@@ -106,6 +105,7 @@ function taskItem(task) {
   del.textContent = 'Delete';
   del.setAttribute('aria-label', `Delete "${task.title}"`);
   del.addEventListener('click', async () => {
+    logUI('task.delete', { id: task.id, title: task.title });
     await TodoDB.remove(task.id);
     render();
   });
@@ -123,9 +123,12 @@ form.addEventListener('submit', async e => {
     formError.textContent = 'Repeating tasks need a due date.';
     formError.hidden = false;
     dueInput.focus();
+    logUI('task.add.rejected', { title, reason: 'repeat-needs-due-date' });
     return;
   }
-  await TodoDB.add({ title, dueDate: dueInput.value, tags: parseTags(tagsInput.value), repeat });
+  const task = { title, dueDate: dueInput.value, tags: parseTags(tagsInput.value), repeat };
+  logUI('task.add', task);
+  await TodoDB.add(task);
   form.reset();
   everyWrap.hidden = true;
   formError.hidden = true;
@@ -140,10 +143,11 @@ repeatSelect.addEventListener('change', () => {
 
 statusButtons.forEach(button => button.addEventListener('click', () => {
   filters.status = button.dataset.status;
+  logUI('filter.status', { status: filters.status });
   statusButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
   render();
 }));
 
-tagFilter.addEventListener('change', () => { filters.tag = tagFilter.value; render(); });
+tagFilter.addEventListener('change', () => { filters.tag = tagFilter.value; logUI('filter.tag', { tag: filters.tag, via: 'dropdown' }); render(); });
 
 render();

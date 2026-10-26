@@ -1,0 +1,15 @@
+[
+  { "id": "1-frontend-logs", "description": "Each UI action writes a frontend log entry with details", "verifiedBy": "scenario:todo/logs-frontend" },
+  { "id": "1-backend-logs", "description": "Each IndexedDB operation writes a backend log entry with details", "verifiedBy": "scenario:todo/logs-backend" },
+  { "id": "2-logs-persist", "description": "Logs survive a reload and are readable with TodoLog.all()", "verifiedBy": "scenario:todo/logs-persist-reload" },
+  { "id": "2-db-upgrade", "description": "Existing tasks survive the DB v1 → v2 upgrade", "verifiedBy": "scenario:todo/db-upgrade-keeps-tasks" },
+  { "id": "3-skipped-tests", "description": "Eval fails when code changes without tests", "verifiedBy": "unit:rules: fails when code changes without tests" },
+  { "id": "4-regression", "description": "Eval fails on a regression", "verifiedBy": "unit:rules: fails on a regression" },
+  { "id": "4-removed-check", "description": "Eval fails when a previously passing check is removed or skipped", "verifiedBy": "unit:rules: fails when a previously passing check is removed or skipped" },
+  { "id": "4-console-errors", "description": "Eval fails on console errors", "verifiedBy": "unit:rules: fails on console errors" },
+  { "id": "4-missing-check", "description": "Eval fails when an acceptance check has no result", "verifiedBy": "unit:rules: fails when an acceptance check has no result" },
+  { "id": "5-report", "description": "Report shows previous state, changes, per-check results and log comparison", "verifiedBy": "unit:report includes previous state, changes, checks and log comparison" },
+  { "id": "6-existing-features", "description": "Existing todo features still pass in the browser (no regressions)", "verifiedBy": "scenario:todo/recurring-weekly" },
+  { "id": "7-ci", "description": "GitHub Actions check runs on the PR and passes", "verifiedBy": "ci" },
+  { "id": "8-docs", "description": "CLAUDE.md index and factory-loop skill updated", "verifiedBy": "files:CLAUDE.md,.claude/skills/factory-loop/SKILL.md" }
+]

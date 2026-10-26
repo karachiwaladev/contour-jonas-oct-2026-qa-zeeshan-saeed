@@ -9,6 +9,8 @@ A minimal todo app (Tickets #3, #4 and #5).
 
 Tasks are stored client-side in the browser's **IndexedDB** (`todo-app` database), so they persist across reloads with no server. Tasks created before due dates and tags existed still work (they just have neither).
 
+**Action log** (#12): every UI action is logged as `frontend` (`task.add`, `task.complete`, `filter.status`, …) and every IndexedDB operation as `backend` (`tasks.add`, `tasks.put`, …), as `{ ts, layer, action, details }` entries in the `logs` store and the console. Read them with `await TodoLog.all()` (or `TodoLog.export()`) in the browser console. The change eval in `evals/` compares these logs before and after each change.
+
 ## Run
 
 Open `index.html` in a browser, or serve the folder (e.g. `npx serve todo`).
@@ -19,6 +21,8 @@ Open `index.html` in a browser, or serve the folder (e.g. `npx serve todo`).
 |------|---------|
 | `index.html` | Page markup: new-task form, filters, list |
 | `db.js` | IndexedDB wrapper (`TodoDB.all/add/put/remove`) |
+| `logger.js` | `TodoLog`: structured frontend/backend action log |
 | `recurrence.js` | Repeat rules: next due date, form parsing, badge label |
+| `tests/` | Unit tests (`node --test todo/tests/`) |
 | `app.js` | UI: render, filters, add / toggle / delete |
 | `style.css` | Styles |
