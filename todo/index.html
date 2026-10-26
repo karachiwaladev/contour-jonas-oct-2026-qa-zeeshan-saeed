@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Todo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Todo</h1>
+    <form id="new-task">
+      <input id="title" type="text" placeholder="What needs doing?" autocomplete="off" required aria-label="New task">
+      <div class="row">
+        <input id="due" type="date" aria-label="Due date">
+        <input id="tags" type="text" placeholder="Tags, comma-separated" autocomplete="off" aria-label="Tags">
+        <button type="submit">Add</button>
+      </div>
+    </form>
+    <nav class="filters" aria-label="Filters">
+      <div id="status-filter" role="group" aria-label="Status">
+        <button type="button" data-status="all" aria-pressed="true">All</button>
+        <button type="button" data-status="active" aria-pressed="false">Incomplete</button>
+        <button type="button" data-status="done" aria-pressed="false">Completed</button>
+      </div>
+      <label>Tag
+        <select id="tag-filter"><option value="">All tags</option></select>
+      </label>
+    </nav>
+    <ul id="tasks"></ul>
+    <p id="empty" hidden>No tasks to show.</p>
+  </main>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
