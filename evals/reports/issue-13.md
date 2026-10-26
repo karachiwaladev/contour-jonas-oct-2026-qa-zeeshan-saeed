@@ -2,15 +2,15 @@
 
 **Verdict: ✅ PASS**
 
-- **Previous state:** `origin/ticket-12-eval` (a58f846)
-- **New state:** `working tree` (a58f846)
-- **Run at:** 2026-10-26T11:49:37.262Z
+- **Previous state:** `origin/ticket-12-eval` (2f538b3)
+- **New state:** `working tree` (f18dd6a)
+- **Run at:** 2026-10-26T14:06:30.277Z
 
 ## What changed
 
 | Project | Code | Tests / scenario | Other |
 |---|---|---|---|
-| todo | M `todo/app.js`<br>M `todo/db.js`<br>M `todo/index.html`<br>M `todo/recurrence.js`<br>M `todo/style.css`<br>A `todo/priority.js` | M `evals/scenarios/todo.mjs`<br>A `todo/tests/priority.test.mjs` | M `todo/README.md` |
+| todo | M `todo/app.js`<br>M `todo/db.js`<br>M `todo/index.html`<br>A `todo/priority.js`<br>M `todo/recurrence.js`<br>M `todo/style.css` | M `evals/scenarios/todo.mjs`<br>A `todo/tests/priority.test.mjs` | M `todo/README.md`<br>A `todo/screenshots/issue-13/add-task.png`<br>A `todo/screenshots/issue-13/edit-validation.png`<br>A `todo/screenshots/issue-13/logs-frontend.png`<br>A `todo/screenshots/issue-13/priority-sort.png`<br>A `todo/screenshots/issue-13/recurring-weekly.png` |
 | evals | — | — | A `evals/checks/issue-13.json` |
 | _(repo)_ | | | M `CLAUDE.md` |
 
@@ -74,12 +74,19 @@
 
 ## Unit tests
 
-Before: 21/21 passing · After: 25/25 passing
+Before: 28/28 passing · After: 32/32 passing
 
 <details><summary>All unit tests</summary>
 
 | Test | Before | After |
 |---|---|---|
+| evals: hook: a failing eval blocks with the failures | ✅ | ✅ |
+| evals: hook: a passing eval adds context and does not block | ✅ | ✅ |
+| evals: hook: ignores other commands and the eval runner itself | ✅ | ✅ |
+| evals: hook: picks the issue from the branch checks file | ✅ | ✅ |
+| evals: hook: reads the eval verdict and failures | ✅ | ✅ |
+| evals: hook: script exits quietly for non-test commands and when disabled | ✅ | ✅ |
+| evals: hook: triggers on test commands | ✅ | ✅ |
 | evals: report includes previous state, changes, checks and log comparison | ✅ | ✅ |
 | evals: rules: a step that failed before and passes now is not a regression | ✅ | ✅ |
 | evals: rules: classifies code, tests and other files per project | ✅ | ✅ |
