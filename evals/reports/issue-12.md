@@ -3,16 +3,16 @@
 **Verdict: ✅ PASS**
 
 - **Previous state:** `origin/main` (8794368)
-- **New state:** `working tree` (a58f846)
-- **Run at:** 2026-10-26T14:05:06.165Z
+- **New state:** `working tree` (2f538b3)
+- **Run at:** 2026-10-26T14:09:02.169Z
 
 ## What changed
 
 | Project | Code | Tests / scenario | Other |
 |---|---|---|---|
 | todo | M `todo/app.js`<br>M `todo/db.js`<br>M `todo/index.html`<br>A `todo/logger.js` | A `evals/scenarios/todo.mjs`<br>A `todo/tests/recurrence.test.mjs` | M `todo/README.md`<br>A `todo/screenshots/issue-12/add-task.png`<br>A `todo/screenshots/issue-12/logs-frontend.png`<br>A `todo/screenshots/issue-12/recurring-weekly.png` |
-| evals | A `evals/lib/browser.mjs`<br>A `evals/lib/report.mjs`<br>A `evals/lib/rules.mjs`<br>A `evals/run-eval.mjs`<br>A `evals/lib/hook.mjs` | A `evals/tests/rules.test.mjs`<br>A `evals/tests/hook.test.mjs` | A `evals/README.md`<br>A `evals/checks/issue-12.json` |
-| _(repo)_ | | | M `.claude/skills/factory-loop/SKILL.md`<br>A `.github/workflows/eval.yml`<br>M `.gitignore`<br>M `CLAUDE.md`<br>A `.claude/hooks/eval-after-tests.mjs`<br>A `.claude/settings.json` |
+| evals | A `evals/lib/browser.mjs`<br>A `evals/lib/hook.mjs`<br>A `evals/lib/report.mjs`<br>A `evals/lib/rules.mjs`<br>A `evals/run-eval.mjs` | A `evals/tests/hook.test.mjs`<br>A `evals/tests/rules.test.mjs`<br>A `evals/tests/browser.test.mjs` | A `evals/README.md`<br>A `evals/checks/issue-12.json` |
+| _(repo)_ | | | A `.claude/hooks/eval-after-tests.mjs`<br>A `.claude/settings.json`<br>M `.claude/skills/factory-loop/SKILL.md`<br>A `.github/workflows/eval.yml`<br>M `.gitignore`<br>M `CLAUDE.md` |
 
 ## Acceptance checks
 
@@ -82,12 +82,15 @@
 
 ## Unit tests
 
-Before: 0/0 passing · After: 28/28 passing
+Before: 0/0 passing · After: 31/31 passing
 
 <details><summary>All unit tests</summary>
 
 | Test | Before | After |
 |---|---|---|
+| evals: browser: an explicit Chrome path that does not exist is not used | — | ✅ |
+| evals: browser: ignores a missing or partly written DevToolsActivePort | — | ✅ |
+| evals: browser: reads the port Chrome picked from DevToolsActivePort | — | ✅ |
 | evals: hook: a failing eval blocks with the failures | — | ✅ |
 | evals: hook: a passing eval adds context and does not block | — | ✅ |
 | evals: hook: ignores other commands and the eval runner itself | — | ✅ |
