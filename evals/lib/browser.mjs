@@ -48,22 +48,11 @@ export async function runScenario(appDir, scenario, { chrome, screenshotDir } = 
 
   const server = await serve(appDir);
   const url = `http://127.0.0.1:${server.address().port}/`;
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'eval-chrome-'));
-  const port = 9300 + Math.floor(Math.random() * 600);
-  const args = ['--headless=new', '--disable-gpu', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
-    '--window-size=820,900', '--no-first-run', '--no-default-browser-check', 'about:blank'];
-  if (process.env.CI) args.unshift('--no-sandbox');
-  const proc = spawn(chromePath, args, { stdio: 'ignore' });
-
+  let chromeRun;
   let ws;
   try {
-    let target;
-    for (let i = 0; i < 75 && !target; i++) {
-      try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'); } catch {}
-      if (!target) await sleep(200);
-    }
-    if (!target) throw new Error('could not connect to Chrome');
-    ws = new WebSocket(target.webSocketDebuggerUrl);
+    chromeRun = await launchChrome(chromePath);
+    ws = new WebSocket(chromeRun.target.webSocketDebuggerUrl);
     await new Promise((resolve, reject) => { ws.addEventListener('open', resolve, { once: true }); ws.addEventListener('error', reject, { once: true }); });
 
     let id = 0;
@@ -122,9 +111,51 @@ export async function runScenario(appDir, scenario, { chrome, screenshotDir } = 
     return { steps, consoleErrors };
   } finally {
     try { ws?.close(); } catch {}
-    proc.kill();
     server.close();
-    await sleep(300);
-    try { fs.rmSync(profile, { recursive: true, force: true }); } catch {}
+    if (chromeRun) await stopChrome(chromeRun);
   }
+}
+
+/** Parse Chrome's DevToolsActivePort file: first line is the port, second the browser target path. */
+export function parseDevToolsActivePort(text) {
+  const [portLine] = String(text ?? '').split(/\r?\n/);
+  const port = Number(portLine);
+  return Number.isInteger(port) && port > 0 && port < 65536 ? port : null;
+}
+
+// Start headless Chrome on a port it picks itself (--remote-debugging-port=0, read back from
+// DevToolsActivePort), so runs never collide on a port. Slow CI runners get 30 s and one retry.
+async function launchChrome(chromePath, { attempts = 2, timeoutMs = 30000 } = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'eval-chrome-'));
+    const args = ['--headless=new', '--disable-gpu', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
+      '--window-size=820,900', '--no-first-run', '--no-default-browser-check', 'about:blank'];
+    if (process.env.CI) args.unshift('--no-sandbox', '--disable-dev-shm-usage');
+    const proc = spawn(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    proc.stderr.on('data', d => { stderr = (stderr + d).slice(-2000); });
+    let exited = false;
+    proc.once('exit', () => { exited = true; });
+
+    const deadline = Date.now() + timeoutMs;
+    let target;
+    while (!target && !exited && Date.now() < deadline) {
+      const port = (() => { try { return parseDevToolsActivePort(fs.readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8')); } catch { return null; } })();
+      if (port) {
+        try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t => t.type === 'page'); } catch {}
+      }
+      if (!target) await sleep(200);
+    }
+    if (target) return { proc, profile, target };
+    await stopChrome({ proc, profile });
+    lastError = new Error(`could not connect to Chrome (attempt ${attempt}/${attempts}${exited ? ', Chrome exited' : ''}): ${stderr.trim().split('\n').slice(-3).join(' | ')}`);
+  }
+  throw lastError;
+}
+
+async function stopChrome({ proc, profile }) {
+  proc.kill();
+  await sleep(300);
+  try { fs.rmSync(profile, { recursive: true, force: true }); } catch {}
 }
