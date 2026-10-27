@@ -1,10 +1,12 @@
 // Self-tests for the "eval right after tests" hook.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { isTestCommand, pickIssue, parseEvalOutput, hookResult } from '../lib/hook.mjs';
+import { isTestCommand, classifyCommand, pickIssue, parseEvalOutput, hookResult } from '../lib/hook.mjs';
 
 const hookScript = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '.claude', 'hooks', 'eval-after-tests.mjs');
 
@@ -49,9 +51,25 @@ test('hook: a passing eval adds context and does not block', () => {
   assert.match(r.hookSpecificOutput.additionalContext, /passed/);
 });
 
+test('hook: a test run in the same line as the eval runner still triggers', () => {
+  assert.equal(isTestCommand('node --test evals/tests/; node evals/run-eval.mjs --base origin/main'), true);
+});
+
+test('hook: text that only mentions a test command does not trigger, and says why', () => {
+  for (const cmd of ['node -e "if (/--test/.test(x)) run()"', 'git commit -m "run node --test before pushing"',
+    "cat > notes.md <<'EOF'\nnode --test todo/tests/\nEOF"]) {
+    const d = classifyCommand(cmd);
+    assert.equal(d.test, false, cmd);
+    assert.equal(d.nearMiss, true, cmd);
+  }
+  assert.equal(classifyCommand('git status').nearMiss, undefined);
+});
+
 test('hook: script exits quietly for non-test commands and when disabled', () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'eval-hook-'));
   const run = (command, env = {}) => spawnSync(process.execPath, [hookScript], {
-    input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8', env: { ...process.env, ...env },
+    input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8',
+    env: { ...process.env, CLAUDE_PROJECT_DIR: project, ...env },
   });
   const other = run('git status');
   assert.equal(other.status, 0);
@@ -59,4 +77,7 @@ test('hook: script exits quietly for non-test commands and when disabled', () =>
   const disabled = run('node --test', { EVAL_HOOK: 'off' });
   assert.equal(disabled.status, 0);
   assert.equal(disabled.stdout, '');
+  const rows = fs.readFileSync(path.join(project, '.claude', 'logs', 'eval-hook.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+  assert.deepEqual(rows.map(r => [r.verdict, r.reason]), [['skip', 'EVAL_HOOK=off']]);
+  fs.rmSync(project, { recursive: true, force: true });
 });
