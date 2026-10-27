@@ -39,7 +39,7 @@ Never copy project details up into this file; summarise in one line and link dow
 | Path | Purpose |
 |------|---------|
 | [.claude/skills/factory-loop/SKILL.md](.claude/skills/factory-loop/SKILL.md) | The loop: read open tickets, react, do/answer, close. Run with `/loop 10m /factory-loop`. |
-| [.claude/settings.json](.claude/settings.json) | Hook: runs the change eval right after any test command (`.claude/hooks/eval-after-tests.mjs`). |
+| [.claude/settings.json](.claude/settings.json) | Hooks: runs the change eval right after any test command (`.claude/hooks/eval-after-tests.mjs`); guard blocks `rm -rf`, force pushes, `curl \| sh`, `.env` reads (`permissions.deny` + `.claude/hooks/guard-commands.mjs`). |
 | [README.md](README.md) | Workshop rules and scoring. |
 
 ## Working a ticket
