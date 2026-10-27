@@ -55,13 +55,17 @@ in `SCENARIOS` (`run-eval.mjs`).
 
 `.claude/settings.json` registers a Claude Code `PostToolUse` hook (`.claude/hooks/eval-after-tests.mjs`).
 After every shell command the AI runs, it checks whether that was a test run (`node --test`, `npm`/`pnpm`/`yarn test`).
-If it was, it runs this eval straight away (base `origin/main`, or `EVAL_BASE`; issue from the branch's
+It judges the commands the line actually runs (`lib/command.mjs` splits on `;`, `&&`, `|`, newlines, skipping quoted
+text and heredoc bodies), so a quoted or echoed mention of `--test` doesn't trigger it, and a test run on the same
+line as `run-eval.mjs` still does. If it was a test run, it runs this eval straight away (base `origin/main`, or `EVAL_BASE`; issue from the branch's
 `checks/issue-N.json`):
 
 - **pass:** the verdict is added to the AI's context.
 - **fail:** the hook returns `decision: "block"` with the failures, so the AI must fix them before carrying on.
 
 Each run is logged to `.claude/logs/eval-hook.jsonl`, and the last report is `.claude/logs/eval-latest.md` (both git-ignored).
+Skips that could look like a missed trigger are logged too (`verdict: "skip"` with a reason: `EVAL_HOOK=off`, or a
+line that mentions a test command without running one). The hook tests log into a temp folder, never this one.
 Set `EVAL_HOOK=off` to disable it. The runner sets this for its own child processes and never re-triggers itself.
 The decision logic is in `lib/hook.mjs`, tested by `tests/hook.test.mjs`.
 

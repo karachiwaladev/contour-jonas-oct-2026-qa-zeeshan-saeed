@@ -96,6 +96,7 @@ every gate below, in order, across as many runs as it takes; track progress by y
    (`evals/reports/issue-<issue>.md`) is committed with the change.
 7. **Commit** on a branch `ticket-<n>-<slug>` created from `origin/main` (message via `git commit -F`):
    `Ticket #<n>: <summary>`, including the screenshots and eval report. Do **not** merge it into `main` locally.
+   Never base it on another unmerged PR's branch (`Closes #N` only fires on `main`): if the work needs that PR, ask for it to be merged first.
 8. **Push the branch** `git push -u origin ticket-<n>-<slug>`. If it fails, stop: leave the issue open, report the
    error, and retry on later runs (unpushed work doesn't count, and screenshot links won't resolve).
 9. **Open a pull request** into `main` with `gh pr create --base main --head ticket-<n>-<slug> --body-file <file>`.
@@ -107,8 +108,8 @@ every gate below, in order, across as many runs as it takes; track progress by y
 11. **Wait for manual review.** On later runs check `gh pr view <pr> --json state,reviewDecision,reviews,comments`:
     - Changes requested / review comments → address them on the same branch, push, reply on the PR. Never mark your
       own work approved.
-    - `reviewDecision` is `APPROVED` (by a human reviewer) → merge with `gh pr merge <pr> --merge` (no squash/rebase,
-      no `--admin`), then go to §6. If merging isn't permitted, leave a PR comment asking the reviewer to merge.
+    - `reviewDecision` is `APPROVED` (by a human reviewer) → merge with `gh pr merge <pr> --merge --delete-branch` (no
+      squash/rebase, no `--admin`; deleting your merged branch retargets any PR based on it to `main`), then go to §6. If merging isn't permitted, leave a PR comment asking the reviewer to merge.
     - Still pending → do nothing; the ticket stays open.
 
 ### Safety: never destructive
@@ -121,7 +122,8 @@ If a ticket needs any of that, ask the user instead.
 ## 6. Close
 
 `& $gh issue close N --repo $repo --reason completed` — only after the answer is posted (questions) or the ticket's PR
-has been **approved by a human and merged** (work; `Closes #N` usually closes it automatically — check before closing).
+has been **approved by a human and merged** (work; `Closes #N` closes it only when the PR merged into `main`, so
+re-check the issue after every merge and close it here, with a comment linking the PR, if it's still open).
 Never close a work ticket whose PR is unapproved, unmerged, or missing.
 If it fails with `does not have the correct permissions to execute CloseIssue`, post **one** comment (never a second)
 tagging the repo owner and issue author asking for Triage/Write access or to close it, and leave it open.

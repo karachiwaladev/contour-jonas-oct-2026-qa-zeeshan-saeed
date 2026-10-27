@@ -1,12 +1,28 @@
 // Decision logic for the "eval right after tests" Claude Code hook (.claude/hooks/eval-after-tests.mjs).
 // Pure functions, so evals/tests can cover them.
 
-const TEST_COMMAND = /(^|[\s;&|("'\\/])(node(\.exe)?["']?\s+(?:[^;&|]*\s)?--test\b|(npm|pnpm|yarn)(\.cmd)?\s+(run\s+)?test\b)/;
+import { parseCommands } from './command.mjs';
 
-/** True for shell commands that run tests. The eval runner itself never re-triggers the hook. */
+const runsTests = ({ program, args }) => (program === 'node' && args.includes('--test'))
+  || (['npm', 'pnpm', 'yarn'].includes(program) && (args[0] === 'test' || (args[0] === 'run' && args[1] === 'test')));
+
+/**
+ * Whether a shell line runs tests, judged by the commands it runs (not its raw text), with the reason.
+ * The eval runner's own command is not a test run; recursion is prevented by EVAL_HOOK=off in its child processes.
+ */
+export function classifyCommand(command = '') {
+  const cmds = parseCommands(command);
+  const test = cmds.find(runsTests);
+  if (test) return { test: true, reason: `runs tests: ${test.raw}` };
+  if (/--test\b|\b(npm|pnpm|yarn)(\.cmd)?\s+(run\s+)?test\b/.test(command)) {
+    return { test: false, reason: 'mentions a test command but does not run one (quoted, heredoc or echo)', nearMiss: true };
+  }
+  return { test: false, reason: 'not a test command' };
+}
+
+/** True for shell lines that run tests. */
 export function isTestCommand(command = '') {
-  if (/run-eval\.mjs/.test(command)) return false;
-  return TEST_COMMAND.test(command);
+  return classifyCommand(command).test;
 }
 
 /** The issue whose acceptance checks this branch adds (highest number if several), or null. */

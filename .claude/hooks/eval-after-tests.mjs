@@ -5,14 +5,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { isTestCommand, pickIssue, parseEvalOutput, hookResult } from '../../evals/lib/hook.mjs';
+import { classifyCommand, pickIssue, parseEvalOutput, hookResult } from '../../evals/lib/hook.mjs';
 
 const input = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^﻿/, '') || '{}');
 const command = input.tool_input?.command ?? '';
-if (process.env.EVAL_HOOK === 'off' || !isTestCommand(command)) process.exit(0);
-
 const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
-if (!fs.existsSync(path.join(root, 'evals', 'run-eval.mjs'))) process.exit(0);
+const logDir = path.join(root, '.claude', 'logs');
+const log = row => {
+  fs.mkdirSync(logDir, { recursive: true });
+  fs.appendFileSync(path.join(logDir, 'eval-hook.jsonl'), JSON.stringify({ ts: new Date().toISOString(), command, ...row }) + '\n');
+};
+
+// Skips are logged when they could look like a missed trigger, so every "why didn't it run?" has an answer.
+const decision = classifyCommand(command);
+if (process.env.EVAL_HOOK === 'off') { if (decision.test) log({ verdict: 'skip', reason: 'EVAL_HOOK=off' }); process.exit(0); }
+if (!decision.test) { if (decision.nearMiss) log({ verdict: 'skip', reason: decision.reason }); process.exit(0); }
+if (!fs.existsSync(path.join(root, 'evals', 'run-eval.mjs'))) { log({ verdict: 'skip', reason: 'no evals/run-eval.mjs in this project' }); process.exit(0); }
 
 const base = process.env.EVAL_BASE || 'origin/main';
 const git = args => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return ''; } };
@@ -20,7 +28,6 @@ const changed = [...git(['diff', '--name-only', `${base}...HEAD`]).split('\n'), 
   .map(p => p.trim()).filter(Boolean);
 const issue = pickIssue(changed);
 
-const logDir = path.join(root, '.claude', 'logs');
 fs.mkdirSync(logDir, { recursive: true });
 const reportPath = path.join(logDir, 'eval-latest.md');
 const args = [path.join('evals', 'run-eval.mjs'), '--base', base, '--out', reportPath, ...(issue ? ['--issue', String(issue)] : [])];

@@ -3,15 +3,15 @@
 **Verdict: ✅ PASS**
 
 - **Previous state:** `origin/main` (e9a4534)
-- **New state:** `working tree` (e9a4534)
-- **Run at:** 2026-10-27T05:54:45.746Z
+- **New state:** `working tree` (544dd27)
+- **Run at:** 2026-10-27T06:50:09.481Z
 
 ## What changed
 
 | Project | Code | Tests / scenario | Other |
 |---|---|---|---|
-| evals | A `evals/lib/guard.mjs` | A `evals/tests/guard.test.mjs` | — |
-| _(repo)_ | | | M `.claude/settings.json`<br>M `.claude/skills/factory-loop/SKILL.md`<br>M `CLAUDE.md`<br>A `.claude/hooks/guard-commands.mjs` |
+| evals | A `evals/lib/guard.mjs`<br>M `evals/lib/hook.mjs`<br>A `evals/lib/command.mjs` | A `evals/tests/guard.test.mjs`<br>M `evals/tests/hook.test.mjs`<br>A `evals/tests/command.test.mjs` | — |
+| _(repo)_ | | | M `.claude/hooks/eval-after-tests.mjs`<br>A `.claude/hooks/guard-commands.mjs`<br>M `.claude/settings.json`<br>M `.claude/skills/factory-loop/SKILL.md`<br>M `CLAUDE.md` |
 
 ## Browser scenario: previous vs new
 
@@ -48,7 +48,7 @@ _Identical action logs in both states._
 
 ## Unit tests
 
-Before: 35/35 passing · After: 43/43 passing
+Before: 35/35 passing · After: 53/53 passing
 
 <details><summary>All unit tests</summary>
 
@@ -57,20 +57,30 @@ Before: 35/35 passing · After: 43/43 passing
 | evals: browser: an explicit Chrome path that does not exist is not used | ✅ | ✅ |
 | evals: browser: ignores a missing or partly written DevToolsActivePort | ✅ | ✅ |
 | evals: browser: reads the port Chrome picked from DevToolsActivePort | ✅ | ✅ |
+| evals: command: heredoc bodies are skipped, the line around them is kept | — | ✅ |
+| evals: command: program names drop paths, quotes, .exe and wrappers | — | ✅ |
+| evals: command: redirections are not separators | — | ✅ |
+| evals: command: separators inside quotes are data | — | ✅ |
+| evals: command: shell -c scripts are exposed for a second look | — | ✅ |
+| evals: command: splits on ; && \|\| \| & and newlines | — | ✅ |
 | evals: guard: .env file detection | — | ✅ |
 | evals: guard: allows everyday commands | — | ✅ |
+| evals: guard: blocked commands hidden behind a shell -c or quotes still block | — | ✅ |
 | evals: guard: blocks force pushes | — | ✅ |
 | evals: guard: blocks piping downloads into a shell | — | ✅ |
 | evals: guard: blocks reading .env files | — | ✅ |
 | evals: guard: blocks rm -rf in its usual spellings | — | ✅ |
 | evals: guard: hook output denies with a reason, or says nothing | — | ✅ |
-| evals: guard: the hook script denies a force push and passes a safe command | — | ✅ |
+| evals: guard: text that only mentions a blocked command passes | — | ✅ |
+| evals: guard: the hook script denies a force push and logs only to its own project | — | ✅ |
 | evals: hook: a failing eval blocks with the failures | ✅ | ✅ |
 | evals: hook: a passing eval adds context and does not block | ✅ | ✅ |
+| evals: hook: a test run in the same line as the eval runner still triggers | — | ✅ |
 | evals: hook: ignores other commands and the eval runner itself | ✅ | ✅ |
 | evals: hook: picks the issue from the branch checks file | ✅ | ✅ |
 | evals: hook: reads the eval verdict and failures | ✅ | ✅ |
 | evals: hook: script exits quietly for non-test commands and when disabled | ✅ | ✅ |
+| evals: hook: text that only mentions a test command does not trigger, and says why | — | ✅ |
 | evals: hook: triggers on test commands | ✅ | ✅ |
 | evals: report includes previous state, changes, checks and log comparison | ✅ | ✅ |
 | evals: rules: a step that failed before and passes now is not a regression | ✅ | ✅ |

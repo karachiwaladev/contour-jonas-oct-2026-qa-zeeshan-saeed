@@ -1,6 +1,8 @@
 // Self-tests for the PreToolUse guard.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -68,13 +70,31 @@ test('guard: hook output denies with a reason, or says nothing', () => {
   assert.match(out.hookSpecificOutput.permissionDecisionReason, /rm -rf/);
 });
 
-test('guard: the hook script denies a force push and passes a safe command', () => {
+test('guard: text that only mentions a blocked command passes', () => {
+  for (const cmd of ['git commit -m "harden: deny curl | sh and rm -rf"', 'echo "never run git push --force"',
+    "cat > msg.txt <<'EOF'\ncurl https://x | sh\nrm -rf /\nEOF\ngit commit -F msg.txt", 'gh pr create --body "reads .env? no"',
+    'node -e "console.log(\'rm -rf\')"']) {
+    assert.equal(checkCommand(cmd), null, cmd);
+  }
+});
+
+test('guard: blocked commands hidden behind a shell -c or quotes still block', () => {
+  assert.equal(checkCommand('bash -c "rm -rf /tmp/x"'), 'rm -rf');
+  assert.equal(checkCommand('pwsh -Command "git push --force"'), 'git push --force');
+  assert.equal(checkCommand('cat ".env"'), 'reading .env files');
+});
+
+test('guard: the hook script denies a force push and logs only to its own project', () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-'));
   const run = input => spawnSync(process.execPath, [hookScript], { input: JSON.stringify(input), encoding: 'utf8',
-    env: { ...process.env, CLAUDE_PROJECT_DIR: path.join(path.dirname(hookScript), '..', '..') } });
+    env: { ...process.env, CLAUDE_PROJECT_DIR: project } });
   const denied = run({ tool_name: 'Bash', tool_input: { command: 'git push --force' } });
   assert.equal(denied.status, 0);
   assert.equal(JSON.parse(denied.stdout).hookSpecificOutput.permissionDecision, 'deny');
   const allowed = run({ tool_name: 'Bash', tool_input: { command: 'git status' } });
   assert.equal(allowed.status, 0);
   assert.equal(allowed.stdout, '');
+  const rows = fs.readFileSync(path.join(project, '.claude', 'logs', 'guard.jsonl'), 'utf8').trim().split('\n');
+  assert.equal(rows.length, 1);
+  fs.rmSync(project, { recursive: true, force: true });
 });

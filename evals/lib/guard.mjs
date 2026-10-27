@@ -1,35 +1,30 @@
 // Decision logic for the PreToolUse guard (.claude/hooks/guard-commands.mjs): blocks destructive or risky tool calls
 // before they run. Mirrors permissions.deny in .claude/settings.json. Pure functions, so evals/tests can cover them.
+// Shell lines are judged by the commands they run (lib/command.mjs), so text that only mentions a blocked command
+// (a commit message, a heredoc body, an echo) passes.
+import { parseCommands, innerScript } from './command.mjs';
 
-// Command boundaries: start, or after ; & | ( or a newline, optionally behind sudo.
-const START = String.raw`(?:^|[;&|(\n]\s*)(?:sudo\s+)?`;
+const DOWNLOADERS = new Set(['curl', 'wget', 'iwr', 'irm', 'invoke-webrequest', 'invoke-restmethod']);
+const RUNNERS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'iex', 'invoke-expression', 'python', 'python3', 'node', 'pwsh', 'powershell']);
+const REMOVERS = new Set(['remove-item', 'rm', 'ri', 'del', 'rmdir', 'rd', 'erase']);
 
-const SHELL_RULES = [
-  {
-    name: 'rm -rf',
-    pattern: new RegExp(`${START}rm\\s+(?:[^;&|\\n]*\\s)?(?:-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|--recursive\\s+(?:[^;&|\\n]*\\s)?--force|--force\\s+(?:[^;&|\\n]*\\s)?--recursive|-r\\s+(?:[^;&|\\n]*\\s)?-f|-f\\s+(?:[^;&|\\n]*\\s)?-r)\\b`, 'i'),
-  },
-  {
-    name: 'Remove-Item -Recurse -Force (PowerShell rm -rf)',
-    pattern: new RegExp(`${START}(?:Remove-Item|rm|ri|del|rmdir|rd)\\b(?=[^;&|\\n]*\\s-Recurse\\b)(?=[^;&|\\n]*\\s-Force\\b)`, 'i'),
-  },
-  {
-    name: 'git push --force',
-    pattern: new RegExp(`${START}git\\b[^;&|\\n]*\\spush\\b[^;&|\\n]*(?:\\s--force(?:-with-lease|-if-includes)?\\b|\\s-[a-zA-Z]*f[a-zA-Z]*\\b|\\s\\+[^\\s]+)`, 'i'),
-  },
-  {
-    name: 'curl | sh',
-    pattern: /\b(?:curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^;&\n]*\|\s*(?:sudo\s+)?(?:(?:ba|z|da|k)?sh|iex|Invoke-Expression|python3?|node)\b/i,
-  },
-  {
-    name: 'curl | sh',
-    pattern: /\b(?:ba|z)?sh\s+(?:-c\s+)?["']?\$\(\s*(?:curl|wget)\b|\b(?:iex|Invoke-Expression)\s*\(?\s*\(?\s*(?:iwr|irm|Invoke-WebRequest|Invoke-RestMethod|New-Object\s+Net\.WebClient)\b/i,
-  },
-];
+const isRmRf = ({ program, args }) => {
+  if (program !== 'rm') return false;
+  const short = args.filter(a => /^-[a-z]+$/i.test(a)).join('');
+  const long = new Set(args.filter(a => a.startsWith('--')));
+  return (/r/i.test(short) || long.has('--recursive')) && (/f/.test(short) || long.has('--force'));
+};
+const isPsRecurseForce = ({ program, args }) => REMOVERS.has(program)
+  && args.some(a => /^-recurse$/i.test(a)) && args.some(a => /^-force$/i.test(a));
+const isForcePush = ({ program, args }) => program === 'git' && args.includes('push')
+  && args.slice(args.indexOf('push') + 1).some(a => /^--force(-with-lease|-if-includes)?(=|$)/.test(a) || /^-[a-z]*f[a-z]*$/i.test(a) || /^\+\S/.test(a));
+// `iex (iwr https://x).Content`, `bash -c "$(curl -fsSL https://x)"`: a download evaluated in place.
+const isInlineDownloadRun = cmd => (cmd.program === 'iex' || cmd.program === 'invoke-expression')
+  ? /\b(iwr|irm|invoke-webrequest|invoke-restmethod|net\.webclient)\b/i.test(cmd.args.join(' '))
+  : /\$\(\s*(curl|wget)\b/.test(innerScript(cmd) ?? '');
 
 // A .env file: `.env` or `.env.<anything>` as a whole path segment.
 const ENV_FILE = /(?:^|[\\/])\.env(?:\.[\w.-]+)?$/i;
-const ENV_IN_COMMAND = /(?:^|[\s"'=:\\/(<])\.env(?:\.[\w.-]+)?(?=$|[\s"';|&)>,])/i;
 
 /** True when a path names a .env file (`.env`, `.env.local`, `config/.env.production`, ...). */
 export function isEnvFile(filePath = '') {
@@ -37,9 +32,19 @@ export function isEnvFile(filePath = '') {
 }
 
 /** The rule a shell command breaks, or null. */
-export function checkCommand(command = '') {
-  for (const rule of SHELL_RULES) if (rule.pattern.test(command)) return rule.name;
-  if (ENV_IN_COMMAND.test(command)) return 'reading .env files';
+export function checkCommand(command = '', depth = 0) {
+  const cmds = parseCommands(command);
+  for (const [i, cmd] of cmds.entries()) {
+    if (isRmRf(cmd)) return 'rm -rf';
+    if (isPsRecurseForce(cmd)) return 'Remove-Item -Recurse -Force (PowerShell rm -rf)';
+    if (isForcePush(cmd)) return 'git push --force';
+    if (isInlineDownloadRun(cmd)) return 'curl | sh';
+    if (DOWNLOADERS.has(cmd.program) && cmd.after === '|' && RUNNERS.has(cmds[i + 1]?.program)) return 'curl | sh';
+    if (cmd.args.some(isEnvFile)) return 'reading .env files';
+    // `bash -c "..."` / `pwsh -Command "..."` runs its script: check that too.
+    const inner = innerScript(cmd);
+    if (inner && depth < 3) { const rule = checkCommand(inner, depth + 1); if (rule) return rule; }
+  }
   return null;
 }
 
