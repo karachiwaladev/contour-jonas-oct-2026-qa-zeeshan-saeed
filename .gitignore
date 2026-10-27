@@ -1,3 +1,7 @@
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 .claude/logs/
+# Local secrets (API keys) never go to GitHub.
+.env
+.env.*
+!.env.example
