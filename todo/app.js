@@ -10,6 +10,7 @@ const prioritySelect = document.getElementById('priority');
 const priorityFilter = document.getElementById('priority-filter');
 const list = document.getElementById('tasks');
 const empty = document.getElementById('empty');
+const countFooter = document.getElementById('count');
 const statusButtons = document.querySelectorAll('#status-filter button');
 const tagFilter = document.getElementById('tag-filter');
 
@@ -43,6 +44,9 @@ async function render() {
   const visible = tasks.filter(matches).sort(Priority.compare);
   list.replaceChildren(...visible.map(taskItem));
   empty.hidden = visible.length > 0;
+  // Counts cover all tasks, not just the filtered ones; hidden when there are none.
+  countFooter.textContent = Counts.summary(tasks).text;
+  countFooter.hidden = tasks.length === 0;
 }
 
 function dueLabel(dueDate) {

@@ -69,3 +69,13 @@ The decision logic is in `lib/hook.mjs`, tested by `tests/hook.test.mjs`.
 
 `.github/workflows/eval.yml` runs the same eval on every pull request (base = the PR's target branch, issue = the
 PR's `Closes #N`) and fails the check if the eval fails. The report is shown in the job summary.
+
+## Hidden content in tickets (#16)
+
+The factory acts only on what a reader of the rendered issue sees. `ticket-text.mjs` prints a ticket body's visible
+text and flags anything hidden (HTML comments, `<details>` bodies, `hidden` or `display:none` elements, and zero-width
+or bidi characters). It exits with code 2 when it stripped something:
+
+    gh issue view N --json body | node evals/ticket-text.mjs
+
+The logic is in `lib/ticket-text.mjs`, tested by `tests/ticket-text.test.mjs`. The factory-loop skill runs it on every ticket.
