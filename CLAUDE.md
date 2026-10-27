@@ -31,7 +31,7 @@ Never copy project details up into this file; summarise in one line and link dow
 
 | Folder | Purpose | Entry point |
 |--------|---------|-------------|
-| [todo/](todo/) | Todo app (Tickets #3–#5): due dates, tags, filters, recurring tasks; IndexedDB; action logs. | [todo/README.md](todo/README.md) |
+| [todo/](todo/) | Todo app (Tickets #3–#6): due dates, tags, filters, recurring tasks, priority, edit; IndexedDB; action logs. | [todo/README.md](todo/README.md) |
 | [evals/](evals/) | Change eval (#12): before/after comparison that blocks skipped tests and regressions; runs automatically after tests via a hook. | [evals/README.md](evals/README.md) |
 
 ### Factory tooling

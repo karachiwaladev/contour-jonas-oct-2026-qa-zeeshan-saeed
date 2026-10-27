@@ -30,5 +30,20 @@ li.done .due.overdue { color: inherit; opacity: .6; }
 #every { width: 4rem; padding: .5rem; }
 #form-error { margin: 0; color: #c62828; }
 .tag {padding: .1rem .5rem; border-radius: 999px; border: 1px solid currentColor; background: transparent; font-size: inherit; }
-.delete { padding: .25rem .6rem; }
+.delete, .edit-btn { padding: .25rem .6rem; }
+.actions { display: flex; gap: .3rem; }
+.priority { padding: .05rem .45rem; border-radius: .3rem; font-weight: 600; font-size: .8em; }
+.priority-high { background: #c62828; color: #fff; }
+.priority-medium { background: #f9a825; color: #222; }
+.priority-low { background: color-mix(in srgb, currentColor 20%, transparent); }
+li.editing { display: block; }
+.edit-form { margin: 0; }
+.edit-form input, .edit-form select { padding: .4rem; }
+.edit-form .edit-tags { flex: 1; min-width: 8rem; }
+.edit-every-wrap { display: flex; align-items: center; gap: .3rem; }
+.edit-every-wrap[hidden] { display: none; }
+.edit-every { width: 4rem; }
+.edit-error { margin: 0; color: #c62828; }
+.filters .selects { display: flex; gap: .75rem; flex-wrap: wrap; }
+#priority { padding: .5rem; }
 #empty { opacity: .6; }

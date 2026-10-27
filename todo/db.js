@@ -37,14 +37,14 @@ const TodoDB = (() => {
       log('tasks.getAll', { count: tasks.length });
       return tasks;
     },
-    async add({ title, dueDate = '', tags = [], repeat = null }) {
-      const id = await run('tasks', 'readwrite', s => s.add({ title, done: false, dueDate, tags, repeat, createdAt: Date.now() }));
-      log('tasks.add', { id, title });
+    async add({ title, dueDate = '', tags = [], repeat = null, priority = 'medium' }) {
+      const id = await run('tasks', 'readwrite', s => s.add({ title, done: false, dueDate, tags, repeat, priority, createdAt: Date.now() }));
+      log('tasks.add', { id, title, priority });
       return id;
     },
     async put(task) {
       await run('tasks', 'readwrite', s => s.put(task));
-      log('tasks.put', { id: task.id, done: task.done });
+      log('tasks.put', { id: task.id, done: task.done, priority: task.priority });
     },
     async remove(id) {
       await run('tasks', 'readwrite', s => s.delete(id));
