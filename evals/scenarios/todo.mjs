@@ -75,6 +75,15 @@ window.__e = {
   },
   // Open/done tally of the list itself, with all filters off.
   tally() { const i = this.items(); return { open: i.filter(t => !t.done).length, done: i.filter(t => t.done).length }; },
+  // Search (#19): type into the box like a user (input event), or press Escape in it.
+  async search(q) {
+    const s = document.getElementById('search'); if (!s) throw new Error('no search box');
+    s.value = q; s.dispatchEvent(new Event('input', { bubbles: true })); await this.sleep(450);
+  },
+  async searchKey(key) {
+    document.getElementById('search').dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true })); await this.sleep(400);
+  },
+  emptyText() { const e = document.getElementById('empty'); return e && !e.hidden ? e.textContent : ''; },
   async uncomplete(title) {
     const li = this.li(title, true); if (!li) throw new Error('no done task "' + title + '"');
     li.querySelector('input[type=checkbox]').click(); await this.sleep(500);
@@ -431,6 +440,120 @@ export const steps = [
       const after = await evaluate(`__e.count()`);
       const t = await evaluate(`__e.tally()`);
       return { ok: !!before && sameCount(after, before.open, before.done) && sameCount(after, t.open, t.done), detail: `"${before?.text}" → "${after?.text}"` };
+    },
+  },
+  // --- Search (#19). Adds its own tasks; every step leaves the search box and filters cleared. ---
+  {
+    id: 'search-title', name: 'Search filters by title as you type, case-insensitively', screenshot: true,
+    run: async ({ evaluate, screenshot }) => {
+      await evaluate(`__e.add('Search alpha', { tags: 'sx-tag' })`);
+      await evaluate(`__e.add('Search beta', { tags: 'other' })`);
+      await evaluate(`__e.search('SEARCH ALP')`);
+      const shown = (await evaluate(`__e.items()`)).map(i => i.title);
+      await screenshot('search-typed');
+      await evaluate(`__e.search('')`);
+      return { ok: shown.join() === 'Search alpha', detail: shown.join(', ') || 'none' };
+    },
+  },
+  {
+    id: 'search-tag', name: 'Search matches tags',
+    run: async ({ evaluate }) => {
+      await evaluate(`__e.search('sx-ta')`);
+      const shown = (await evaluate(`__e.items()`)).map(i => i.title);
+      await evaluate(`__e.search('')`);
+      return { ok: shown.join() === 'Search alpha', detail: shown.join(', ') || 'none' };
+    },
+  },
+  {
+    id: 'search-words', name: 'Every word in the search must match',
+    run: async ({ evaluate }) => {
+      await evaluate(`__e.search('search beta')`);
+      const both = (await evaluate(`__e.items()`)).map(i => i.title);
+      await evaluate(`__e.search('alpha other')`);
+      const none = (await evaluate(`__e.items()`)).length;
+      await evaluate(`__e.search('')`);
+      return { ok: both.join() === 'Search beta' && none === 0, detail: `"search beta": ${both.join(', ')}; "alpha other": ${none}` };
+    },
+  },
+  {
+    id: 'search-combines', name: 'Search combines with the status, tag and priority filters',
+    run: async ({ evaluate }) => {
+      await evaluate(`__e.complete('Search beta')`);
+      await evaluate(`__e.search('search')`);
+      await evaluate(`__e.click('#status-filter [data-status=done]')`);
+      const done = (await evaluate(`__e.items()`)).map(i => i.title);
+      await evaluate(`__e.click('#status-filter [data-status=all]')`);
+      await evaluate(`__e.selectTag('sx-tag')`);
+      const tagged = (await evaluate(`__e.items()`)).map(i => i.title);
+      await evaluate(`__e.selectTag('')`);
+      await evaluate(`__e.selectPriority('high')`);
+      const high = (await evaluate(`__e.items()`)).filter(i => i.title.startsWith('Search')).length;
+      await evaluate(`__e.selectPriority('')`);
+      await evaluate(`__e.search('')`);
+      const ok = done.join() === 'Search beta' && tagged.join() === 'Search alpha' && high === 0;
+      return { ok, detail: `done: ${done.join(', ')}; tag: ${tagged.join(', ')}; high: ${high}` };
+    },
+  },
+  {
+    id: 'search-clear', name: 'The clear button and Esc clear the search and show all tasks again',
+    run: async ({ evaluate }) => {
+      const all = (await evaluate(`__e.items()`)).length;
+      await evaluate(`__e.search('alpha')`);
+      await evaluate(`__e.click('#search-clear')`);
+      const afterButton = await evaluate(`[document.getElementById('search').value, __e.items().length, document.getElementById('search-clear').hidden]`);
+      await evaluate(`__e.search('alpha')`);
+      await evaluate(`__e.searchKey('Escape')`);
+      const afterEsc = await evaluate(`[document.getElementById('search').value, __e.items().length]`);
+      const ok = afterButton[0] === '' && afterButton[1] === all && afterButton[2] === true && afterEsc[0] === '' && afterEsc[1] === all;
+      return { ok, detail: `${all} tasks; after ×: ${JSON.stringify(afterButton)}; after Esc: ${JSON.stringify(afterEsc)}` };
+    },
+  },
+  {
+    id: 'search-no-match', name: 'No matches shows a message naming the search', screenshot: true,
+    run: async ({ evaluate, screenshot }) => {
+      await evaluate(`__e.search('zzqx')`);
+      const text = await evaluate(`__e.emptyText()`);
+      const count = await evaluate(`__e.items().length`);
+      await screenshot('search-no-match');
+      await evaluate(`__e.search('')`);
+      return { ok: count === 0 && text === 'No tasks match "zzqx"', detail: `"${text}"` };
+    },
+  },
+  {
+    id: 'search-footer', name: 'Search does not change the count footer',
+    run: async ({ evaluate }) => {
+      const before = await evaluate(`__e.count()`);
+      await evaluate(`__e.search('alpha')`);
+      const during = await evaluate(`__e.count()`);
+      await evaluate(`__e.search('')`);
+      return { ok: !!before && sameCount(during, before.open, before.done), detail: `"${before?.text}" vs "${during?.text}"` };
+    },
+  },
+  {
+    id: 'search-reload', name: 'A reload starts with an empty search',
+    run: async ({ evaluate, reload }) => {
+      const all = (await evaluate(`__e.items()`)).length;
+      await evaluate(`__e.search('alpha')`);
+      await reload();
+      const state = await evaluate(`[document.getElementById('search').value, __e.items().length]`);
+      return { ok: state[0] === '' && state[1] === all, detail: JSON.stringify(state) };
+    },
+  },
+  {
+    id: 'search-a11y', name: 'The search box is labelled and keyboard reachable',
+    run: async ({ evaluate }) => {
+      const r = await evaluate(`(() => { const s = document.getElementById('search'); return { label: s.getAttribute('aria-label') || '', tab: s.tabIndex, visible: s.offsetParent !== null }; })()`);
+      return { ok: r.label.length > 0 && r.tab >= 0 && r.visible, detail: JSON.stringify(r) };
+    },
+  },
+  {
+    id: 'search-logs', name: 'Search and clearing are logged',
+    run: async ({ evaluate }) => {
+      const logs = await evaluate(`__e.logs()`);
+      if (!logs) return { ok: false, detail: 'TodoLog is not available' };
+      const gaps = missing(logs, [['frontend', 'filter.search'], ['frontend', 'filter.search.clear']]);
+      const typed = logs.filter(e => e.action === 'filter.search').length;
+      return { ok: !gaps.length && typed > 0 && typed < 30, detail: gaps.length ? `missing ${gaps.join(', ')}` : `${typed} filter.search entries (debounced)` };
     },
   },
 ];

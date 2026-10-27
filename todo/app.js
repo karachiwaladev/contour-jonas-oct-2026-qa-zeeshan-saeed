@@ -13,8 +13,10 @@ const empty = document.getElementById('empty');
 const countFooter = document.getElementById('count');
 const statusButtons = document.querySelectorAll('#status-filter button');
 const tagFilter = document.getElementById('tag-filter');
+const searchInput = document.getElementById('search');
+const searchClear = document.getElementById('search-clear');
 
-const filters = { status: 'all', tag: '', priority: '' };
+const filters = { status: 'all', tag: '', priority: '', search: '' };
 const logUI = (action, details) => TodoLog.write('frontend', action, details);
 
 function parseTags(text) {
@@ -26,7 +28,7 @@ function matches(task) {
   if (filters.status === 'done' && !task.done) return false;
   if (filters.tag && !(task.tags ?? []).includes(filters.tag)) return false;
   if (filters.priority && Priority.normalize(task.priority) !== filters.priority) return false;
-  return true;
+  return Search.matches(task, filters.search);
 }
 
 function renderTagOptions(tasks) {
@@ -44,6 +46,7 @@ async function render() {
   const visible = tasks.filter(matches).sort(Priority.compare);
   list.replaceChildren(...visible.map(taskItem));
   empty.hidden = visible.length > 0;
+  empty.textContent = filters.search.trim() ? `No tasks match "${filters.search.trim()}"` : 'No tasks to show.';
   // Counts cover all tasks, not just the filtered ones; hidden when there are none.
   countFooter.textContent = Counts.summary(tasks).text;
   countFooter.hidden = tasks.length === 0;
@@ -239,5 +242,25 @@ statusButtons.forEach(button => button.addEventListener('click', () => {
 priorityFilter.addEventListener('change', () => { filters.priority = priorityFilter.value; logUI('filter.priority', { priority: filters.priority }); render(); });
 
 tagFilter.addEventListener('change', () => { filters.tag = tagFilter.value; logUI('filter.tag', { tag: filters.tag, via: 'dropdown' }); render(); });
+
+// Search filters as you type; the log entry waits for a pause so typing isn't one entry per key.
+let searchLogTimer;
+function setSearch(value) {
+  filters.search = value;
+  searchClear.hidden = !value;
+  clearTimeout(searchLogTimer);
+  if (value.trim()) searchLogTimer = setTimeout(() => logUI('filter.search', { query: value.trim() }), 300);
+  render();
+}
+function clearSearch(via) {
+  if (!searchInput.value && !filters.search) return;
+  searchInput.value = '';
+  logUI('filter.search.clear', { via });
+  setSearch('');
+  searchInput.focus();
+}
+searchInput.addEventListener('input', () => setSearch(searchInput.value));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); clearSearch('escape'); } });
+searchClear.addEventListener('click', () => clearSearch('button'));
 
 render();

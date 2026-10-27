@@ -11,6 +11,7 @@ Tasks are stored client-side in the browser's **IndexedDB** (`todo-app` database
 
 - **Priority** (Ticket #6): High, Medium (default) or Low, shown as a coloured badge. The list is sorted by priority, then due date (undated last). A **Priority** filter combines with the status and tag filters. Recurring tasks keep their priority; tasks saved before priorities existed count as Medium.
 - **Edit**: the **Edit** button turns a task into an inline form (title, due date, tags, priority, repeat) with Save / Cancel, validated like adding.
+- **Search** (#19): a search box above the filters narrows the list as you type, matching titles and tags (case-insensitive; every word must match). It combines with the status, tag and priority filters; × or Esc clears it. Search isn't kept after a reload, and the count footer still counts all tasks.
 - **Count footer** (#16): `3 open · 2 done` below the list, counting all tasks regardless of filters; hidden when there are no tasks. Completing a recurring task counts as one done plus its new open occurrence.
 
 **Action log** (#12): every UI action is logged as `frontend` (`task.add`, `task.complete`, `filter.status`, …) and every IndexedDB operation as `backend` (`tasks.add`, `tasks.put`, …), as `{ ts, layer, action, details }` entries in the `logs` store and the console. Read them with `await TodoLog.all()` (or `TodoLog.export()`) in the browser console. The change eval in `evals/` compares these logs before and after each change.
@@ -29,6 +30,7 @@ Open `index.html` in a browser, or serve the folder (e.g. `npx serve todo`).
 | `recurrence.js` | Repeat rules: next due date, form parsing, badge label |
 | `priority.js` | Priority levels, default, labels and sort order |
 | `counts.js` | Open/done counts for the footer |
+| `search.js` | Search matching (title and tags, every word) |
 | `tests/` | Unit tests (`node --test todo/tests/`) |
 | `app.js` | UI: render, filters, add / toggle / delete |
 | `style.css` | Styles |

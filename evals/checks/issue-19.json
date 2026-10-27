@@ -1,0 +1,15 @@
+[
+  { "id": "1-title", "description": "Typing filters by title as you type, case-insensitively", "verifiedBy": "scenario:todo/search-title" },
+  { "id": "1-tag", "description": "Search matches tags", "verifiedBy": "scenario:todo/search-tag" },
+  { "id": "1-unit", "description": "Search matching rules (title, tags, case, partial)", "verifiedBy": "unit:search: case-insensitive partial match on the title" },
+  { "id": "2-words", "description": "Several words must all match", "verifiedBy": "scenario:todo/search-words" },
+  { "id": "3-combines", "description": "Search combines with the status, tag and priority filters", "verifiedBy": "scenario:todo/search-combines" },
+  { "id": "4-clear", "description": "The clear button and Esc clear the box and show all tasks again", "verifiedBy": "scenario:todo/search-clear" },
+  { "id": "5-no-match", "description": "No matches shows: No tasks match \"x\"", "verifiedBy": "scenario:todo/search-no-match" },
+  { "id": "6-footer", "description": "The count footer is unchanged by search", "verifiedBy": "scenario:todo/search-footer" },
+  { "id": "7-reload", "description": "A reload starts with an empty search", "verifiedBy": "scenario:todo/search-reload" },
+  { "id": "8-a11y", "description": "The search box is labelled and keyboard reachable", "verifiedBy": "scenario:todo/search-a11y" },
+  { "id": "9-logs", "description": "Search actions are logged (frontend:filter.search, filter.search.clear)", "verifiedBy": "scenario:todo/search-logs" },
+  { "id": "10-ci", "description": "No console errors and no regressions; GitHub Eval check passes", "verifiedBy": "ci" },
+  { "id": "10-docs", "description": "README and CLAUDE.md index updated", "verifiedBy": "files:todo/README.md,CLAUDE.md" }
+]
