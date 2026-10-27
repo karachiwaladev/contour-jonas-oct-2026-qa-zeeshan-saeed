@@ -67,7 +67,21 @@ window.__e = {
   async click(selector) { document.querySelector(selector).click(); await this.sleep(400); },
   async selectTag(tag) { const s = document.getElementById('tag-filter'); s.value = tag; s.dispatchEvent(new Event('change')); await this.sleep(400); },
   async logs() { return typeof TodoLog === 'undefined' ? null : TodoLog.all(); },
+  // The count footer (#16): { shown, text, open, done }, or null when there is none.
+  count() {
+    const f = document.getElementById('count'); if (!f) return null;
+    const m = f.textContent.match(/^(\\d+) open · (\\d+) done$/);
+    return { shown: !f.hidden, text: f.textContent, open: m ? +m[1] : NaN, done: m ? +m[2] : NaN };
+  },
+  // Open/done tally of the list itself, with all filters off.
+  tally() { const i = this.items(); return { open: i.filter(t => !t.done).length, done: i.filter(t => t.done).length }; },
+  async uncomplete(title) {
+    const li = this.li(title, true); if (!li) throw new Error('no done task "' + title + '"');
+    li.querySelector('input[type=checkbox]').click(); await this.sleep(500);
+  },
 };`;
+
+const sameCount = (c, open, done) => !!c && c.shown && c.open === open && c.done === done;
 
 const has = (logs, layer, action) => logs.some(e => e.layer === layer && e.action === action);
 const missing = (logs, wanted) => wanted.filter(([layer, action]) => !has(logs, layer, action)).map(w => w.join(':'));
@@ -78,6 +92,14 @@ export const steps = [
     run: async ({ evaluate }) => {
       const ok = await evaluate(`document.title === 'Todo' && !!document.getElementById('new-task')`);
       return { ok, detail: ok ? 'form rendered' : 'page did not render' };
+    },
+  },
+  {
+    id: 'count-empty-hidden', name: 'Count footer is hidden when there are no tasks',
+    run: async ({ evaluate }) => {
+      const c = await evaluate(`__e.count()`);
+      const none = (await evaluate(`__e.items()`)).length === 0;
+      return { ok: !!c && !c.shown && none, detail: c ? `footer ${c.shown ? 'shown' : 'hidden'} with ${none ? 'no' : 'some'} tasks` : 'no count footer' };
     },
   },
   {
@@ -332,6 +354,83 @@ export const steps = [
       const put = logs.find(e => e.layer === 'backend' && e.action === 'tasks.put' && e.details?.priority === 'low');
       const ok = !gaps.length && edit?.details?.changes?.priority === 'low' && edit.details.changes.title === 'Plain edited' && !!put;
       return { ok, detail: gaps.length ? `missing ${gaps.join(', ')}` : `task.edit changes: ${Object.keys(edit?.details?.changes ?? {}).join(', ')}` };
+    },
+  },
+  // --- Task count footer (#16). Runs on the tasks left by the steps above, all filters off. ---
+  {
+    id: 'count-matches-list', name: 'Count footer matches the open/done tasks in the list',
+    run: async ({ evaluate }) => {
+      const c = await evaluate(`__e.count()`);
+      const t = await evaluate(`__e.tally()`);
+      return { ok: sameCount(c, t.open, t.done), detail: `footer "${c?.text}", list ${t.open} open / ${t.done} done` };
+    },
+  },
+  {
+    id: 'count-add', name: 'Adding 3 tasks adds 3 open', screenshot: true,
+    run: async ({ evaluate }) => {
+      const before = await evaluate(`__e.count()`);
+      for (const title of ['Count A', 'Count B', 'Count C']) await evaluate(`__e.add('${title}')`);
+      const c = await evaluate(`__e.count()`);
+      return { ok: !!before && sameCount(c, before.open + 3, before.done), detail: `"${before?.text}" → "${c?.text}"` };
+    },
+  },
+  {
+    id: 'count-toggle', name: 'Completing and un-completing a task moves it between open and done',
+    run: async ({ evaluate }) => {
+      const before = await evaluate(`__e.count()`);
+      await evaluate(`__e.complete('Count A')`);
+      const completed = await evaluate(`__e.count()`);
+      await evaluate(`__e.uncomplete('Count A')`);
+      const reopened = await evaluate(`__e.count()`);
+      const ok = !!before && sameCount(completed, before.open - 1, before.done + 1) && sameCount(reopened, before.open, before.done);
+      return { ok, detail: `"${before?.text}" → "${completed?.text}" → "${reopened?.text}"` };
+    },
+  },
+  {
+    id: 'count-delete', name: 'Deleting a task updates the counts',
+    run: async ({ evaluate }) => {
+      const before = await evaluate(`__e.count()`);
+      await evaluate(`__e.remove('Count C', false)`);
+      const c = await evaluate(`__e.count()`);
+      return { ok: !!before && sameCount(c, before.open - 1, before.done), detail: `"${before?.text}" → "${c?.text}"` };
+    },
+  },
+  {
+    id: 'count-ignores-filters', name: 'Status, tag and priority filters don\'t change the counts', screenshot: true,
+    run: async ({ evaluate, screenshot }) => {
+      const before = await evaluate(`__e.count()`);
+      await evaluate(`__e.click('#status-filter [data-status=done]')`);
+      const byStatus = await evaluate(`__e.count()`);
+      await evaluate(`__e.selectTag('home')`);
+      const byTag = await evaluate(`__e.count()`);
+      await evaluate(`__e.selectPriority('high')`);
+      const byPriority = await evaluate(`__e.count()`);
+      await screenshot('count-filtered');
+      await evaluate(`__e.selectPriority('')`);
+      await evaluate(`__e.selectTag('')`);
+      await evaluate(`__e.click('#status-filter [data-status=all]')`);
+      const ok = !!before && [byStatus, byTag, byPriority].every(c => sameCount(c, before.open, before.done));
+      return { ok, detail: `"${before?.text}" with filters: ${[byStatus, byTag, byPriority].map(c => c?.text).join(' / ')}` };
+    },
+  },
+  {
+    id: 'count-recurring', name: 'Completing a recurring task adds 1 done and keeps open the same',
+    run: async ({ evaluate }) => {
+      await evaluate(`__e.add('Count weekly', { due: __e.today(), repeat: 'weekly' })`);
+      const before = await evaluate(`__e.count()`);
+      await evaluate(`__e.complete('Count weekly')`);
+      const c = await evaluate(`__e.count()`);
+      return { ok: !!before && sameCount(c, before.open, before.done + 1), detail: `"${before?.text}" → "${c?.text}"` };
+    },
+  },
+  {
+    id: 'count-reload', name: 'Counts survive a reload',
+    run: async ({ evaluate, reload }) => {
+      const before = await evaluate(`__e.count()`);
+      await reload();
+      const after = await evaluate(`__e.count()`);
+      const t = await evaluate(`__e.tally()`);
+      return { ok: !!before && sameCount(after, before.open, before.done) && sameCount(after, t.open, t.done), detail: `"${before?.text}" → "${after?.text}"` };
     },
   },
 ];
