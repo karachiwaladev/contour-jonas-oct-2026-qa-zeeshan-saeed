@@ -47,3 +47,6 @@ li.editing { display: block; }
 .filters .selects { display: flex; gap: .75rem; flex-wrap: wrap; }
 #priority { padding: .5rem; }
 #empty { opacity: .6; }
+#count { margin-top: .75rem; padding-top: .5rem; text-align: right; font-size: .9em; opacity: .7;
+         border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
+#count[hidden] { display: none; }

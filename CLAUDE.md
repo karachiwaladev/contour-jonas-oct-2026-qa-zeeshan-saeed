@@ -31,8 +31,8 @@ Never copy project details up into this file; summarise in one line and link dow
 
 | Folder | Purpose | Entry point |
 |--------|---------|-------------|
-| [todo/](todo/) | Todo app (Tickets #3–#6): due dates, tags, filters, recurring tasks, priority, edit; IndexedDB; action logs. | [todo/README.md](todo/README.md) |
-| [evals/](evals/) | Change eval (#12): before/after comparison that blocks skipped tests and regressions; runs automatically after tests via a hook. | [evals/README.md](evals/README.md) |
+| [todo/](todo/) | Todo app (Tickets #3–#6, #16): due dates, tags, filters, recurring tasks, priority, edit, count footer; IndexedDB; action logs. | [todo/README.md](todo/README.md) |
+| [evals/](evals/) | Change eval (#12): before/after comparison that blocks skipped tests and regressions; runs automatically after tests via a hook. Also `ticket-text.mjs`: flags hidden content in ticket bodies. | [evals/README.md](evals/README.md) |
 
 ### Factory tooling
 
