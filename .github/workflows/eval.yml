@@ -1,0 +1,48 @@
+name: Eval
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Find the linked issue
+        id: issue
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          number=$(printf '%s' "$PR_BODY" | grep -oiE '(close[sd]?|fix(es|ed)?|resolve[sd]?) #[0-9]+' | head -n1 | grep -oE '[0-9]+' || true)
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: Run eval
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          ISSUE: ${{ steps.issue.outputs.number }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          args=(--base "origin/$BASE_REF" --head HEAD --out eval-report.md)
+          if [ -n "$ISSUE" ]; then args+=(--issue "$ISSUE"); fi
+          node evals/run-eval.mjs "${args[@]}"
+
+      - name: Publish report
+        if: always()
+        run: if [ -f eval-report.md ]; then cat eval-report.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-report
+          path: eval-report.md
+          if-no-files-found: ignore

@@ -28,7 +28,7 @@ Before starting, read **Lessons** at the bottom — they override the steps abov
 - For each issue, read title, body and **all comments** (`& $gh issue view N --json title,body,author,comments`).
 - Classify each issue:
   - **Done, not closed** — I already answered, or the ticket's PR is merged; only retry closing (§6).
-  - **In review** — my PR for it is open; check review status (§5 step 10).
+  - **In review** — my PR for it is open; check review status (§5 step 11).
   - **Waiting on an answer** — my last comment is a question with no reply after it; skip until someone replies.
   - **Unclear** — go to §3.
   - **Question** — go to §4.
@@ -75,15 +75,26 @@ every gate below, in order, across as many runs as it takes; track progress by y
    check the console for errors, and take a screenshot of each key state. Save them as
    `<project>/screenshots/ticket-<n>-<step>.png`. If the MCP server isn't available, say so in the delivery comment
    and ask the user to add it (`claude mcp add chrome-devtools -- npx chrome-devtools-mcp@latest`) — don't skip silently.
-6. **Commit** on a branch `ticket-<n>-<slug>` created from `origin/main` (message via `git commit -F`):
-   `Ticket #<n>: <summary>`, including the screenshots. Do **not** merge it into `main` locally.
-7. **Push the branch** `git push -u origin ticket-<n>-<slug>`. If it fails, stop: leave the issue open, report the
+6. **Eval (blocking).** Write the plan's acceptance checks to `evals/checks/issue-<issue>.json` (each mapped to a
+   `scenario:`, `unit:`, `files:`, `ci` or `manual` result; see `evals/README.md`), extend the project's tests and
+   `evals/scenarios/<project>.mjs` for the new behaviour, then run
+   `node evals/run-eval.mjs --base origin/main --issue <issue>`. It compares the previous state with the new one and
+   fails on code changed without tests, regressions, failing steps/tests, console errors, or checks with no result.
+   A `PostToolUse` hook also runs the eval automatically right after every test command and blocks with the
+   failures if it fails — treat a hook block like a failing test and fix it before moving on.
+   Fix and re-run until it passes — **never open a PR with a failing eval**. The report
+   (`evals/reports/issue-<issue>.md`) is committed with the change.
+7. **Commit** on a branch `ticket-<n>-<slug>` created from `origin/main` (message via `git commit -F`):
+   `Ticket #<n>: <summary>`, including the screenshots and eval report. Do **not** merge it into `main` locally.
+8. **Push the branch** `git push -u origin ticket-<n>-<slug>`. If it fails, stop: leave the issue open, report the
    error, and retry on later runs (unpushed work doesn't count, and screenshot links won't resolve).
-8. **Open a pull request** into `main` with `gh pr create --base main --head ticket-<n>-<slug> --body-file <file>`.
-   The PR body has: `Closes #<issue>`, what was built, how to run it, the verification checklist with pass/fail, and the
+9. **Open a pull request** into `main` with `gh pr create --base main --head ticket-<n>-<slug> --body-file <file>`.
+   The PR body has: `Closes #<issue>`, what was built, how to run it, the eval verdict with a link to its report, the
+   verification checklist with pass/fail, and the
    screenshots embedded as `![step](https://github.com/<owner>/<repo>/blob/ticket-<n>-<slug>/<project>/screenshots/<file>.png?raw=true)`.
-9. **Deliver.** Comment on the issue (`--body-file`) with a short summary and the PR link, saying it's waiting for review.
-10. **Wait for manual review.** On later runs check `gh pr view <pr> --json state,reviewDecision,reviews,comments`:
+   The **Eval** GitHub Actions check must pass on the PR too.
+10. **Deliver.** Comment on the issue (`--body-file`) with a short summary and the PR link, saying it's waiting for review.
+11. **Wait for manual review.** On later runs check `gh pr view <pr> --json state,reviewDecision,reviews,comments`:
     - Changes requested / review comments → address them on the same branch, push, reply on the PR. Never mark your
       own work approved.
     - `reviewDecision` is `APPROVED` (by a human reviewer) → merge with `gh pr merge <pr> --merge` (no squash/rebase,
@@ -125,6 +136,7 @@ Per issue: what it asked, what you did (with links), and its state — closed, w
 
 - In PowerShell, don't pass `--jq` filters containing spaces; fetch `--json` and parse with `ConvertFrom-Json` — because the filter got split into several arguments.
 - Post comments with `--body-file`, and close only after the comment succeeds — because an inline multi-line `--body` failed while the close went through, leaving an issue closed without its answer.
+- Never round-trip JSON or other UTF-8 files through PowerShell `ConvertTo-Json`/`Set-Content`; write them with the Write/Edit tools or Node — because it turned "→" into mojibake in a checks file.
 - Write commit messages to a file and use `git commit -F <file>`, and check the commit landed before merging — because a message containing double quotes was split into pathspecs and the commit silently didn't happen.
 - Logging out and back in doesn't change repo access; when `push` is false, ask the user for a Write-access account or a grant instead of retrying — because repeated re-logins and pushes kept failing the same way.
 - The README says tickets are meant to be built by the loop, so do work tickets (§5) rather than handing them back — because the user confirmed it by asking for #3 to be built.

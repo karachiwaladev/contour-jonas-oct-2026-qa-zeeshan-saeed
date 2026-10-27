@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/eval-after-tests.mjs\"",
+            "timeout": 300,
+            "statusMessage": "Running change eval after tests"
+          }
+        ]
+      }
+    ]
+  }
+}
